@@ -123,4 +123,240 @@ Proof.
   - intros ? [n ->]. red. now rewrite <- (Hf (x0, n)).
 Qed.
 
+(** * Creative sets *)
+
+(** A set is creative when it is enumerable and its complement is productive.
+    Intuitively, a productivity function effectively witnesses that the
+    complement of a creative set is not enumerable. *)
+
+Definition creative (p : nat -> Prop) := enumerable p /\ productive (compl p).
+
+Lemma K0_creative : creative K0.
+Proof.
+  split.
+  - eapply K0_enum.
+  - eapply K0_productive.
+Qed.
+
+(** Every Σ⁰₁-complete (i.e., m-complete for enumerable sets) set is creative. *)
+Theorem m_complete_to_creative p :
+  enumerable p -> m-complete p -> creative p.
+Proof.
+  intros Hp Hcomp. split; [exact Hp|].
+  eapply productive_red.
+  - eapply red_m_complement, Hcomp, K0_enum.
+  - eapply K0_productive.
+Qed.
+
 End Assume_EA.
+
+(** ** Creative ⇒ Σ⁰₁-complete (Myhill, 1955)
+
+    The reverse direction of Myhill's theorem relies on Kleene's Uniform
+    Recursion Theorem.  In this synthetic setting we derive the Uniform
+    Recursion Theorem for [W] (c.e. sets indexed by [EA]) from:
+      - the partial-function axiom [EPF] (available from [EA] together
+        with [partiality]; assumed here as a hypothesis on an indexing
+        [Θ] so the development is self-contained), and
+      - the [EA] axiom.
+
+    Turning the fixed-point into a many-one reduction additionally
+    requires Markov's principle, to extract a positive membership
+    witness from a double-negated one in an enumerable set.  This is
+    unavoidable: MP is equivalent to every m-complete enumerable set
+    being stable (see [CRM/principles.v]). *)
+
+From SyntheticComputability.Shared Require Import partial equiv_on.
+From SyntheticComputability.Axioms Require Import EPF.
+From SyntheticComputability.CRM Require Import principles.
+
+Section Creative_is_complete.
+
+Context {EA_inst : EA}.
+Context {Part : partiality}.
+
+Notation φ := (proj1_sig EA_inst).
+Notation EAP := (proj2_sig EA_inst).
+
+Variable Θ : nat -> (nat ↛ nat).
+Hypothesis EPFP :
+  forall f : nat -> nat ↛ nat,
+    exists γ, forall x, Θ (γ x) ≡{nat ↛ nat} f x.
+
+Hypothesis MP :
+  forall f : nat -> bool, ~~ (exists n, f n = true) -> exists n, f n = true.
+
+(** *** Kleene's Uniform Recursion Theorem for [Θ].
+
+    Parametric version of the fixed-point theorem [Basic/Rice.v:FP]:
+    for every two-argument index function [f], there is a total function
+    [h : nat -> nat] such that [Θ (h y)] and [Θ (f (h y) y)] agree as
+    partial functions, uniformly in [y]. *)
+Lemma URec_Θ :
+  forall f : nat -> nat -> nat,
+    exists h : nat -> nat, forall y, Θ (h y) ≡{nat ↛ nat} Θ (f (h y) y).
+Proof.
+  intros f.
+  pose (a := fun x z => bind (Θ x x) (fun e => Θ e z)).
+  destruct (EPFP a) as [γ Hγ].
+  pose (ψ := fun y x => ret (f (γ x) y) : part nat).
+  destruct (EPFP ψ) as [cy Hcy].
+  exists (fun y => γ (cy y)).
+  intros y z v.
+  transitivity (a (cy y) z =! v).
+  { apply (Hγ (cy y)). }
+  unfold a. rewrite bind_hasvalue. split.
+  - intros (e & He & Hv).
+    specialize (Hcy y (cy y)). apply Hcy in He. unfold ψ in He.
+    apply ret_hasvalue_inv in He. subst e. exact Hv.
+  - intros Hv. exists (f (γ (cy y)) y). split; [|exact Hv].
+    specialize (Hcy y (cy y)). apply Hcy. unfold ψ. eapply ret_hasvalue.
+Qed.
+
+(** *** Bridging c.e. sets and partial functions
+
+    For every [EA]-index [c], we construct an [EPF]-index [β c] whose
+    corresponding partial function has domain [W c]. *)
+Lemma W_via_Θ :
+  exists β : nat -> nat,
+    forall c x, W c x <-> exists v, Θ (β c) x =! v.
+Proof.
+  destruct (EPFP (fun c x => mkpart (fun n => if φ c n is Some x'
+                                            then if Nat.eqb x' x then Some 0 else None
+                                            else None))) as [β Hβ].
+  exists β. intros c x. split.
+  - intros [n Hn]. exists 0.
+    specialize (Hβ c x). cbn in Hβ. red in Hβ. apply Hβ.
+    apply mkpart_hasvalue.
+    + intros n1 n2 v1 v2 H1 H2.
+      destruct (φ c n1) as [x1|] eqn:E1; try discriminate.
+      destruct (Nat.eqb x1 x); try discriminate. inversion H1; subst.
+      destruct (φ c n2) as [x2|] eqn:E2; try discriminate.
+      destruct (Nat.eqb x2 x); try discriminate. inversion H2; subst.
+      reflexivity.
+    + exists n. rewrite Hn. rewrite Nat.eqb_refl. reflexivity.
+  - intros [v Hv].
+    specialize (Hβ c x). cbn in Hβ. red in Hβ. apply Hβ in Hv.
+    apply mkpart_hasvalue1 in Hv as [n Hn].
+    destruct (φ c n) as [x'|] eqn:E; try discriminate.
+    destruct (Nat.eqb_spec x' x); try discriminate. subst x'.
+    exists n. exact E.
+Qed.
+
+(** Conversely, for every [EPF]-index [d], we construct an [EA]-index
+    [α d] enumerating the domain of [Θ d]. *)
+Lemma Θ_via_W :
+  exists α : nat -> nat,
+    forall d x, W (α d) x <-> exists v, Θ d x =! v.
+Proof.
+  edestruct (EAS (fun d x => exists v, Θ d x =! v)) as [α Hα].
+  - exists (fun k => let (d, xn) := unembed k in
+                     let (x, n) := unembed xn in
+                     if seval (Θ d x) n is Some _ then Some (d, x) else None).
+    intros [d x]. split.
+    + intros [v [n Hn] % seval_hasvalue].
+      exists ⟨d, ⟨x, n⟩⟩. rewrite !embedP. now rewrite Hn.
+    + intros [k Hk].
+      destruct (unembed k) as [d' xn].
+      destruct (unembed xn) as [x' n].
+      destruct (seval (Θ d' x') n) as [v|] eqn:E; try discriminate.
+      inversion Hk; subst. exists v.
+      apply seval_hasvalue. eauto.
+  - exists α. intros d x. specialize (Hα d x).
+    unfold W. exact (iff_sym Hα).
+Qed.
+
+(** *** Uniform Recursion Theorem for [W]. *)
+Lemma URec_W :
+  forall f : nat -> nat -> nat,
+    exists h : nat -> nat, forall y z, W (h y) z <-> W (f (h y) y) z.
+Proof.
+  intros f.
+  destruct W_via_Θ as [β Hβ].
+  destruct Θ_via_W as [α Hα].
+  destruct (URec_Θ (fun d y => β (f (α d) y))) as [hΘ HhΘ].
+  exists (fun y => α (hΘ y)). intros y z.
+  rewrite Hα. rewrite Hβ. split.
+  - intros [v Hv]. specialize (HhΘ y z v). cbn in HhΘ. red in HhΘ.
+    apply HhΘ in Hv. eauto.
+  - intros [v Hv]. specialize (HhΘ y z v). cbn in HhΘ. red in HhΘ.
+    apply HhΘ in Hv. eauto.
+Qed.
+
+(** *** Myhill's theorem: every creative set is Σ⁰₁-complete.
+
+    The proof follows Mayr's slides (Computability Theory, CU Boulder
+    2021, lecture 20): given [A] creative with productivity function
+    [q] for [compl A] and an arbitrary enumerable [B], Uniform Recursion
+    yields [h] with
+    [[
+      W (h y) z  ↔  z = q (h y) ∧ y ∈ B
+    ]]
+    so [W (h y) = {q (h y)}] when [y ∈ B] and [∅] otherwise.  Productivity
+    then forces [q (h y) ∈ A] exactly when [y ∈ B]. *)
+Theorem creative_to_m_complete A :
+  creative A -> m-complete A.
+Proof.
+  intros [HAenum [q Hq]] B HBenum.
+  (* Get an EA-index [cB] for B. *)
+  destruct (do_EA B HBenum) as [cB HcB].
+  (* Parametric family of c.e. sets: W (λ ⟨i, y⟩) z ↔ z = q i ∧ y ∈ B. *)
+  edestruct (EAS (fun iy z => exists i y, iy = ⟨i, y⟩ /\ z = q i /\ W cB y))
+    as [λ Hλ].
+  { exists (fun k => let (i, yn) := unembed k in
+                     let (y, n) := unembed yn in
+                     if φ cB n is Some y' then
+                       if Nat.eqb y' y then Some (⟨i, y⟩, q i) else None
+                     else None).
+    intros [iy z]. split.
+    - intros (i & y & -> & -> & [n Hn]).
+      exists ⟨i, ⟨y, n⟩⟩. rewrite embedP. rewrite embedP.
+      rewrite Hn. now rewrite Nat.eqb_refl.
+    - intros [k Hk].
+      destruct (unembed k) as [i' yn].
+      destruct (unembed yn) as [y' n].
+      destruct (φ cB n) as [y''|] eqn:Eφ; try discriminate.
+      destruct (Nat.eqb_spec y'' y'); try discriminate.
+      inversion Hk; subst. exists i', y'.
+      split; [reflexivity|]. split; [reflexivity|].
+      exists n. exact Eφ. }
+  (* Apply URec_W to obtain h with W (h y) = {q (h y)} when y ∈ B, ∅ else. *)
+  destruct (URec_W (fun i y => λ ⟨i, y⟩)) as [h Hh].
+  (* Characterise W (h y). *)
+  assert (Wh : forall y z,
+             W (h y) z <-> z = q (h y) /\ B y).
+  { intros y z. rewrite Hh. rewrite <- (Hλ ⟨h y, y⟩ z).
+    split.
+    - intros (i' & y' & Hpair & Hz & Hy').
+      apply (f_equal unembed) in Hpair. rewrite !embedP in Hpair.
+      injection Hpair as Heq1 Heq2.
+      rewrite <- Heq1 in Hz.
+      rewrite <- Heq2 in Hy'.
+      split; [exact Hz | now apply HcB].
+    - intros [-> HyB]. exists (h y), y.
+      split; [reflexivity |]. split; [reflexivity |].
+      now apply HcB. }
+  exists (fun y => q (h y)). intros y. split.
+  - (* y ∈ B → q (h y) ∈ A *)
+    intros HyB.
+    (* ¬¬ A (q (h y)) follows from productivity; MP then yields A (q (h y)). *)
+    assert (HWhy : W (h y) (q (h y))) by (apply Wh; split; auto).
+    apply (MP_to_MP_semidecidable MP nat A
+             (enumerable_semi_decidable discrete_nat HAenum) (q (h y))).
+    intros HnA.
+    assert (Wsub : forall z, W (h y) z -> compl A z).
+    { intros z Hz. apply Wh in Hz as [-> _]. exact HnA. }
+    destruct (Hq (h y) Wsub) as [_ Hnotw]. exact (Hnotw HWhy).
+  - (* q (h y) ∈ A → y ∈ B *)
+    intros HqA.
+    (* y ∉ B would make W (h y) = ∅ ⊆ compl A; productivity yields
+       q (h y) ∈ compl A, contradicting [HqA]. *)
+    apply (MP_to_MP_semidecidable MP nat B
+             (enumerable_semi_decidable discrete_nat HBenum) y).
+    intros HnB.
+    assert (Wsub : forall z, W (h y) z -> compl A z).
+    { intros z Hz. apply Wh in Hz as [_ ?]. contradiction. }
+    destruct (Hq (h y) Wsub) as [HqcA _]. exact (HqcA HqA).
+Qed.
+
+End Creative_is_complete.
