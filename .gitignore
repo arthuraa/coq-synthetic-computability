@@ -1,5 +1,8 @@
 _CoqProject
 
+# Nix build output
+result
+
 # Created by https://www.toptal.com/developers/gitignore/api/latex,emacs,coq
 # Edit at https://www.toptal.com/developers/gitignore?templates=latex,emacs,coq
 

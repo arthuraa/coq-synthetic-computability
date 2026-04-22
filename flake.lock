@@ -49,10 +49,44 @@
         "type": "github"
       }
     },
+    "pytanque": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1776538811,
+        "narHash": "sha256-1Hae21BuMdE6MjRdiBO7fcsuS4HzahOdLLhynAUox3I=",
+        "owner": "LLM4Rocq",
+        "repo": "pytanque",
+        "rev": "4092b1238b56468fdc1b3d100e078791c9690fd4",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LLM4Rocq",
+        "repo": "pytanque",
+        "type": "github"
+      }
+    },
+    "rocq-mcp": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1776328817,
+        "narHash": "sha256-R+alv6VrLtoN/iCwzIwD4gf7ZU2RY3xH99HvB6j9HPg=",
+        "owner": "LLM4Rocq",
+        "repo": "rocq-mcp",
+        "rev": "56929d2ba6ec92a078177739f4118b9abbf6d641",
+        "type": "github"
+      },
+      "original": {
+        "owner": "LLM4Rocq",
+        "repo": "rocq-mcp",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "flake-parts": "flake-parts",
-        "nixpkgs": "nixpkgs"
+        "nixpkgs": "nixpkgs",
+        "pytanque": "pytanque",
+        "rocq-mcp": "rocq-mcp"
       }
     }
   },
