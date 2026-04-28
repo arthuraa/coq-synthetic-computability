@@ -3,6 +3,9 @@ _CoqProject
 # Nix build output
 result
 
+# rocq-mcp leaves cache files in the workspace
+rocq_mcp_cache_*.v
+
 # Created by https://www.toptal.com/developers/gitignore/api/latex,emacs,coq
 # Edit at https://www.toptal.com/developers/gitignore?templates=latex,emacs,coq
 
