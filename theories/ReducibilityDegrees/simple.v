@@ -153,10 +153,9 @@ End Assume_EA.
 (** ** Creative ⇒ Σ⁰₁-complete (Myhill, 1955)
 
     The reverse direction of Myhill's theorem leans on Kleene's Uniform
-    Recursion Theorem [Basic/Recursion.v:URec_W], which in turn requires
-    a partial-function indexing [Θ] (here taken as a hypothesis; one can
-    derive [EPF] from [EA] together with [partiality] via the
-    equivalence in [Axioms/Equivalence.v]).
+    Recursion Theorem [Basic/Recursion.v:URec_W], which is derivable
+    from [EA] together with [partiality] (the chain [EA -> SCT -> EPF]
+    of [Axioms/Equivalence.v] gives a partial-function indexing).
 
     Turning the fixed-point into a many-one reduction additionally
     requires Markov's principle, to extract a positive membership
@@ -175,11 +174,6 @@ Context {Part : partiality}.
 
 Notation φ := (proj1_sig EA_inst).
 Notation EAP := (proj2_sig EA_inst).
-
-Variable Θ : nat -> (nat ↛ nat).
-Hypothesis EPFP :
-  forall f : nat -> nat ↛ nat,
-    exists γ, forall x, Θ (γ x) ≡{nat ↛ nat} f x.
 
 Hypothesis MP_assm : MP.
 
@@ -221,7 +215,7 @@ Proof.
       split; [reflexivity|]. split; [reflexivity|].
       exists n. exact Eφ. }
   (* Apply URec_W to obtain h with W (h y) = {q (h y)} when y ∈ B, ∅ else. *)
-  destruct (URec_W Θ EPFP (fun i y => λ ⟨i, y⟩)) as [h Hh].
+  destruct (URec_W (fun i y => λ ⟨i, y⟩)) as [h Hh].
   (* Characterise W (h y). *)
   assert (Wh : forall y z,
              W (h y) z <-> z = q (h y) /\ B y).

@@ -19,7 +19,7 @@ Require Import SyntheticComputability.Axioms.EA.
 Require Import SyntheticComputability.Synthetic.Definitions.
 Require Import SyntheticComputability.Synthetic.EnumerabilityFacts.
 From SyntheticComputability.Shared Require Import partial equiv_on embed_nat.
-From SyntheticComputability.Axioms Require Import EPF.
+From SyntheticComputability.Axioms Require Import EPF Equivalence.
 Require Import Arith.
 
 Section Recursion.
@@ -30,10 +30,13 @@ Context {Part : partiality}.
 Notation φ := (proj1_sig EA_inst).
 Notation EAP := (proj2_sig EA_inst).
 
-Variable Θ : nat -> (nat ↛ nat).
-Hypothesis EPFP :
-  forall f : nat -> nat ↛ nat,
-    exists γ, forall x, Θ (γ x) ≡{nat ↛ nat} f x.
+(** [EA] together with [partiality] is enough to derive [EPF] (via
+    [EA -> SCT -> EPF] in [Axioms/Equivalence.v]).  We pick the canonical
+    instance and use it locally; nothing in the public statements below
+    mentions [Θ] except [URec_Θ]. *)
+Local Definition recursion_EPF : EPF := SCT_to_EPF (EA_to_SCT EA_inst).
+Local Notation Θ := (proj1_sig recursion_EPF).
+Local Definition EPFP := proj2_sig recursion_EPF.
 
 (** ** Kleene's Uniform Recursion Theorem for [Θ]
 
