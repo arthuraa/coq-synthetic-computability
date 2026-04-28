@@ -35,18 +35,28 @@
         packages.default = pkgs.coqPackages.coq-synthetic-computability;
         packages.rocq-mcp = pkgs.rocq-mcp;
 
+        # Default shell: lean, for humans editing the development.
         devShells.default = pkgs.mkShell {
           propagatedBuildInputs = [
             pkgs.coqPackages.coq-lsp
             pkgs.rocqPackages.vsrocq-language-server
-            # rocq-mcp and the tools it spawns.  `pet` is already on PATH
-            # via coq-lsp; `coqc` via the default Coq package; dune is
-            # used by rocq-mcp to detect dune workspaces.
+          ];
+          inputsFrom = [
+            self'.packages.default
+          ];
+        };
+
+        # AI-agent shell: extends `default` with rocq-mcp and the tools it
+        # drives (`pet` is already on PATH via coq-lsp; `coqc` via Coq;
+        # dune is used by rocq-mcp to detect dune workspaces).  Use this
+        # when configuring an MCP client.
+        devShells.ai = pkgs.mkShell {
+          propagatedBuildInputs = [
             pkgs.rocq-mcp
             pkgs.dune_3
           ];
           inputsFrom = [
-            self'.packages.default
+            self'.devShells.default
           ];
         };
 
