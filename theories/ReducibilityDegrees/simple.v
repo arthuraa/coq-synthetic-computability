@@ -183,8 +183,7 @@ Hypothesis EPFP :
   forall f : nat -> nat ↛ nat,
     exists γ, forall x, Θ (γ x) ≡{nat ↛ nat} f x.
 
-Hypothesis MP :
-  forall f : nat -> bool, ~~ (exists n, f n = true) -> exists n, f n = true.
+Hypothesis MP_assm : MP.
 
 (** *** Kleene's Uniform Recursion Theorem for [Θ].
 
@@ -341,7 +340,7 @@ Proof.
     intros HyB.
     (* ¬¬ A (q (h y)) follows from productivity; MP then yields A (q (h y)). *)
     assert (HWhy : W (h y) (q (h y))) by (apply Wh; split; auto).
-    apply (MP_to_MP_semidecidable MP nat A
+    apply (MP_to_MP_semidecidable MP_assm nat A
              (enumerable_semi_decidable discrete_nat HAenum) (q (h y))).
     intros HnA.
     assert (Wsub : forall z, W (h y) z -> compl A z).
@@ -351,7 +350,7 @@ Proof.
     intros HqA.
     (* y ∉ B would make W (h y) = ∅ ⊆ compl A; productivity yields
        q (h y) ∈ compl A, contradicting [HqA]. *)
-    apply (MP_to_MP_semidecidable MP nat B
+    apply (MP_to_MP_semidecidable MP_assm nat B
              (enumerable_semi_decidable discrete_nat HBenum) y).
     intros HnB.
     assert (Wsub : forall z, W (h y) z -> compl A z).
