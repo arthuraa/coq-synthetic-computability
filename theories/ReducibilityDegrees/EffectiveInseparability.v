@@ -27,7 +27,7 @@ Lemma W_union :
   exists u : nat -> nat -> nat,
     forall j c x, W (u j c) x <-> W j x \/ W c x.
 Proof.
-edestruct (EAS (fun jc x => W (fst (unembed jc)) x \/ W (snd (unembed jc)) x))
+destruct (EAS (fun jc x => W (fst (unembed jc)) x \/ W (snd (unembed jc)) x))
   as [e He].
 {exists (fun k =>
   let (jc, m) := unembed k in
@@ -66,7 +66,7 @@ Theorem eff_insep_to_creative (A B : nat -> Prop) :
 Proof.
 intros (Ha & Hb & Hdisj & f & Hf).
 split; [apply Ha |].
-apply partial_productive_iff_productive; auto.
+apply (partial_productive_iff_productive _ MP_assm).
 rewrite W_spec in Ha; destruct Ha as [i Ha].
 rewrite W_spec in Hb; destruct Hb as [j Hb].
 destruct W_union as [u Hu].
