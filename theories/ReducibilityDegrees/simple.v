@@ -169,7 +169,7 @@ Definition partial_productive (p : nat -> Prop) : Prop :=
       exists k,
         hasvalue (f c) k /\ p k /\ ~ W c k.
 
-Lemma partial_productive__productive (p : nat -> Prop) :
+Lemma partial_productive_iff_productive (p : nat -> Prop) :
   MP -> partial_productive p <-> productive p.
 Proof.
 intros MP; split.
