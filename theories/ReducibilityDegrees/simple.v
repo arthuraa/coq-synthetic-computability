@@ -150,6 +150,120 @@ Qed.
 
 End Assume_EA.
 
+From SyntheticComputability.Shared Require Import partial.
+From SyntheticComputability.Basic Require Import Recursion.
+From SyntheticComputability.CRM Require Import principles.
+
+Section PartialProductive.
+
+Context {EA : EA}.
+Context {Part : partiality}.
+
+Notation φ := (proj1_sig EA).
+Notation EAP := (proj2_sig EA).
+
+Definition partial_productive (p : nat -> Prop) : Prop :=
+  exists f : nat -> part nat,
+    forall c,
+      (forall x, W c x -> p x) ->
+      exists k,
+        hasvalue (f c) k /\ p k /\ ~ W c k.
+
+Lemma partial_productive__productive (p : nat -> Prop) :
+  MP -> partial_productive p <-> productive p.
+Proof.
+intros MP; split.
+- intros [f Hf].
+  (* Build an enumerator λ for pairs (e,c) listing values x with
+      seval (f e) n = Some x and W c x. *)
+  destruct (EAS
+    (fun iy z => exists e c, iy = ⟨e, c⟩ /\ exists n, seval (f e) n = Some z /\ W c z)
+  ) as [λ Hλ].
+  { exists (fun k => let (e, r) := unembed k in
+                      let (cn, m) := unembed r in
+                      let (c, n) := unembed cn in
+                      match seval (f e) n, φ c m with
+                      | Some z1, Some z2 => if z1 =? z2 then Some (⟨e, c⟩, z1) else None
+                      | _, _ => None end).
+    intros [iy z]. split.
+    - intros (e & c & -> & n & Hse & m & Hφ).
+      exists ⟨e, ⟨⟨c, n⟩, m⟩⟩.
+      rewrite !embedP, Hse, Hφ.
+      now rewrite Nat.eqb_refl.
+    - intros [k Hk].
+      destruct (unembed k) as [e r],
+              (unembed r) as [cn m],
+              (unembed cn) as [c n].
+      destruct (seval (f e) n) as [z1|] eqn:Ese; [| discriminate].
+      destruct (φ c m) as [z2|] eqn:Ephi; [| discriminate].
+      destruct (Nat.eqb_spec z1 z2) as [->|_].
+      + injection Hk; intros -> <-. exists e, c.
+        split; [reflexivity|].
+        exists n.
+        split; [exact Ese| exists m; exact Ephi].
+      + discriminate Hk.
+  }
+
+  destruct (URec_W (fun i y => λ ⟨i, y⟩)) as [g Hg].
+
+  assert (Hf_total : forall c, ter (f (g c))).
+  { intros c.
+    assert (Hter : ~~ ter (f (g c))).
+    { intro Hnter.
+      (* If f (g c) does not terminate then there is no n with seval ... = Some _,
+          so by Hλ and Hg we get W (g c) = ∅. *)
+      assert (Hnexist : forall x, ~ (exists n, seval (f (g c)) n = Some x)).
+      { intros x [??]. apply Hnter. exists x. eapply seval_hasvalue; eauto. }
+      assert (HnotWgc : forall x, ~ W (g c) x).
+      { intros x Hgx. specialize (Hg c x).
+        specialize (Hλ (⟨g c, c⟩)) as Hλgc.
+        apply Hg in Hgx.
+        edestruct Hλgc as [_ Hλgc2].
+        apply Hλgc2 in Hgx as (e & c' & Heq & [n [Hse Hw]]).
+        apply embed_pair_inv in Heq as [<- <-].
+        apply (Hnexist x). exists n. exact Hse.
+      }
+      (* From W (g c) = ∅ we get W (g c) ⊆ p, so applying Hf yields a value, contradicting Hnter. *)
+      assert (Wsub : forall z, W (g c) z -> p z).
+      { intros z Hz. exfalso. apply (HnotWgc z Hz). }
+      destruct (Hf (g c) Wsub) as (k & Hk & _ & _).
+      apply Hnter. exists k. exact Hk.
+    }
+    eapply MP_to_MP_partial; eauto.
+  }
+  assert (HWgc : forall c (Hc : forall x, W c x -> p x) x, W (g c) x -> p x).
+  { intros c ? x Hgx.
+    apply (Hg c x) in Hgx.
+    specialize (Hλ (⟨g c, c⟩)) as Hλgc.
+    edestruct Hλgc as [_ Hλgc2].
+    apply Hλgc2 in Hgx as (e & c' & Heq & [n [Hse Hw]]).
+    apply embed_pair_inv in Heq as [<- <-].
+    auto. }
+  assert (Heval : forall c k (Hk : f (g c) =! k), eval (Hf_total c) = k).
+  { intros ?? Hk; symmetry; eapply hasvalue_det; [exact Hk | apply eval_hasvalue]. }
+  (* Define the total productive witness by extracting the value from f (g c). *)
+  exists (fun c => eval (Hf_total c)).
+  intros c Hc; split;
+    destruct (Hf (g c) (HWgc c Hc)) as (k & Hk & ? & Hwk);
+    rewrite (Heval c k Hk); [assumption |].
+  intro Hwc. apply Hwk. apply (Hg c k).
+  specialize (Hλ (⟨g c, c⟩) k) as [Hλgc _].
+  apply Hλgc.
+  exists (g c), c.
+  split; [reflexivity | ].
+  apply seval_hasvalue in Hk as [n Hn].
+  exists n.
+  split; [exact Hn | exact Hwc].
+- intros [f Hf].
+  exists (fun c => ret (f c)).
+  intros c [Hp Hw] % Hf.
+  exists (f c).
+  split; eauto.
+  apply ret_hasvalue.
+Qed.
+
+End PartialProductive.
+
 (** ** Creative ⇒ Σ⁰₁-complete (Myhill, 1955)
 
     The reverse direction of Myhill's theorem leans on Kleene's Uniform
@@ -162,10 +276,6 @@ End Assume_EA.
     witness from a double-negated one in an enumerable set.  This is
     unavoidable: MP is equivalent to every m-complete enumerable set
     being stable (see [CRM/principles.v]). *)
-
-From SyntheticComputability.Shared Require Import partial.
-From SyntheticComputability.Basic Require Import Recursion.
-From SyntheticComputability.CRM Require Import principles.
 
 Section Creative_is_complete.
 

@@ -39,6 +39,17 @@ Module EmbedNatNotations.
   Notation "'fun!' '⟨' x ',' y '⟩' '=>' b" := (fun p => let (x,y) := unembed p in b) (at level 30, b at level 200).
 End EmbedNatNotations.
 
+Lemma embed_pair_inv a b c d: embed (a, b) = embed (c, d) <-> a = c /\
+ b = d.
+Proof.
+  split.
+  - intro H.
+    apply (f_equal unembed) in H.
+    rewrite !embedP in H.
+    now inversion H.
+  - intros [-> ->]. subst. reflexivity.
+Qed.
+
 Module VectorEmbedding.
 
 Require Import Vector.
