@@ -1,4 +1,3 @@
-From SyntheticComputability.Basic Require Import Recursion.
 From SyntheticComputability.Synthetic Require Import DecidabilityFacts EnumerabilityFacts.
 Require Import SyntheticComputability.Axioms.EA.
 From SyntheticComputability.ReducibilityDegrees Require Import simple.
@@ -11,8 +10,8 @@ Context {Part : partiality}.
 
 Hypothesis MP_assm : MP.
 
-Notation φ := (proj1_sig EA).
-Notation EAP := (proj2_sig EA).
+Notation φ := (proj1_sig EA_inst).
+Notation EAP := (proj2_sig EA_inst).
 
 Definition eff_insep (A B : nat -> Prop) : Prop :=
   enumerable A /\ enumerable B /\
@@ -25,81 +24,41 @@ Definition eff_insep (A B : nat -> Prop) : Prop :=
     exists k, hasvalue (f i j) k /\ ~ W i k /\ ~ W j k.
 
 Lemma W_union :
-  forall j, exists u, forall c x, W (u c) x <-> W j x \/ W c x.
+  exists u : nat -> nat -> nat,
+    forall j c x, W (u j c) x <-> W j x \/ W c x.
 Proof.
-intros j.
-destruct W_via_Θ as [β Hβ].
-set (Θ := proj1_sig Recursion.recursion_EPF).
-pose proof (proj2_sig Recursion.recursion_EPF) as HΘ.
-pose (h' := fun e x fuel =>
-  match seval (Θ (β j) x) fuel, seval (Θ (β e) x) fuel with
-  | Some _, _ => ret true
-  | _, Some _ => ret true
-  | _, _ => ret false
+edestruct (EAS (fun jc x => W (fst (unembed jc)) x \/ W (snd (unembed jc)) x))
+  as [e He].
+{exists (fun k =>
+  let (jc, m) := unembed k in
+  let (j, c) := unembed jc in
+  let (side, n) := unembed m in
+  match side with
+  | 0 => match φ j n with Some x => Some (jc, x) | None => None end
+  | _ => match φ c n with Some x => Some (jc, x) | None => None end
   end).
-pose (h := fun e x => mu (h' e x)).
-destruct (HΘ h) as [γ Hγ].
-destruct Θ_via_W as [α Hα].
-exists (fun c => α (γ c)).
-intros c x.
-rewrite (Hα (γ c) x).
-split.
-- intros [v Hv].
-  apply (proj1 (Hγ c x v)) in Hv.
-  unfold h in Hv.
-  apply mu_hasvalue in Hv as [Hh' _].
-  apply seval_hasvalue in Hh' as [n Hn].
-  unfold h' in Hn.
-  destruct (seval (Θ (β j) x) v) as [y|] eqn:E1.
-  + left. apply Hβ. exists y. apply seval_hasvalue. exists v. exact E1.
-  + destruct (seval (Θ (β c) x) v) as [y|] eqn:E2.
-    * right. apply Hβ. exists y. apply seval_hasvalue. exists v. exact E2.
-    * assert (Hcon : ret false =! true) by ( apply seval_hasvalue; exists n; exact Hn ).
-      pose proof (ret_hasvalue (A:=bool) false) as Hret.
-      pose proof (hasvalue_det (A:=bool) Hcon Hret) as Heq.
-      discriminate Heq.
-- set (P := fun n : nat =>
-    (exists y, seval (Θ (β j) x) n = Some y) \/
-    (exists y, seval (Θ (β c) x) n = Some y)).
-  assert (Hd : forall n, {P n} + {~ P n}).
-  { intros n.
-    destruct (seval (Θ (β j) x) n) as [y'|] eqn:E1.
-    - left; now left; exists y'.
-    - destruct (seval (Θ (β c) x) n) as [y'|] eqn:E2.
-      + left; right; exists y'; apply E2.
-      + right. intros [[y' H]|[y' H]]; [congruence|congruence].
-  }
-assert (Hstep : (W j x \/ W c x) -> exists v, Θ (γ c) x =! v).
-{ intros Hor.
-  assert (Hex : exists n, P n).
-  { destruct Hor as [Hj | Hc].
-    - apply Hβ in Hj as [y Hy].
-      apply seval_hasvalue in Hy as [n0 Hn0].
-      exists n0. left. exists y. exact Hn0.
-    - apply Hβ in Hc as [v Hv].
-      apply seval_hasvalue in Hv as [n0 Hn0].
-      exists n0. right. exists v. exact Hn0. }
-  set (sig := mu_nat_dep P Hd Hex).
-  set (n := proj1_sig sig).
-  exists n.
-  apply (proj2 (Hγ c x n)).
-  unfold h. rewrite mu_hasvalue.
-  split.
-  - destruct (proj2_sig sig) as [[y' Hy'] | [y' Hy']];
-    unfold h'; fold n in Hy'; rewrite Hy';
-    [ | destruct (seval (A:=nat) (Θ (β j) x) n)];
-    apply ret_hasvalue.
-  - intros m Hm.
-    assert (HP : ~ P m) by (eapply mu_nat_dep_min; exact Hm).
-    unfold P in HP.
-    destruct (seval (Θ (β j) x) m) as [y'|] eqn:E1.
-    + exfalso. apply HP. left. exists y'. reflexivity.
-    + destruct (seval (Θ (β c) x) m) as [y'|] eqn:E2.
-      * exfalso. apply HP. right. exists y'. reflexivity.
-      * unfold h'. rewrite E1, E2. apply ret_hasvalue. }
-intros [Hj | Hc].
-+ exact (Hstep (or_introl Hj)).
-+ exact (Hstep (or_intror Hc)).
+intros [jc x]. split.
+- intros [[n Hn] | [n Hn]];
+  [exists ⟨jc, ⟨0, n⟩⟩ | exists ⟨jc, ⟨1, n⟩⟩];
+  rewrite !embedP; destruct (unembed jc) as [??]; simpl in Hn;
+    now rewrite Hn.
+- intros [k Hk].
+  destruct (unembed k) as [jc' m];
+    destruct (unembed jc') as [j c] eqn:Eqjc;
+    destruct (unembed m) as [side n].
+  destruct side as [|];
+    [destruct (φ j n) as [x'|] eqn:Eqn | destruct (φ c n) as [x'|] eqn:Eqn];
+    try discriminate;
+    inversion Hk; subst; [left | right];
+    exists n; rewrite Eqjc; simpl; exact Eqn.
+}
+exists (fun j c => e ⟨j, c⟩).
+intros j c x.
+specialize (He ⟨j, c⟩ x).
+rewrite embedP in He.
+simpl in He.
+rewrite He.
+reflexivity.
 Qed.
 
 Theorem eff_insep_to_creative (A B : nat -> Prop) :
@@ -110,14 +69,14 @@ split; [apply Ha |].
 apply partial_productive_iff_productive; auto.
 rewrite W_spec in Ha; destruct Ha as [i Ha].
 rewrite W_spec in Hb; destruct Hb as [j Hb].
-destruct (W_union j) as [u Hu].
-exists (fun c => f i (u c)).
+destruct W_union as [u Hu].
+exists (fun c => f i (u j c)).
 intros c Hx.
-pose proof (Hf i (u c)) as Hf'.
+pose proof (Hf i (u j c)) as Hf'.
 set (HsupA := (fun x HAx => (proj1 (Ha x) HAx))).
-assert (HsupB : forall x, B x -> W (u c) x).
+assert (HsupB : forall x, B x -> W (u j c) x).
 { intros x HB % Hb. rewrite Hu. left. exact HB. }
-assert (HWdisj : forall x, W i x -> ~ W (u c) x).
+assert (HWdisj : forall x, W i x -> ~ W (u j c) x).
 { intros x HA % Ha Huc % Hu.
   destruct Huc as [Hj | Hc].
   - apply Hb in Hj. eapply Hdisj; eauto.
@@ -132,7 +91,7 @@ repeat split; [exact Hk | |].
   exact HAk.
 - intro Hwck.
   apply Hkj.
-  apply (Hu c k).
+  apply (Hu j c k).
   right.
   exact Hwck.
 Qed.
