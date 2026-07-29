@@ -592,7 +592,7 @@ Proof.
     unfold h in Heq.
     destruct (g m) eqn:E1; try congruence.
     destruct (unembed n0) eqn:E2.
-    eapply beq_nat_true in Heq as ->.
+    eapply PeanoNat.Nat.eqb_eq in Heq as ->.
     unfold h2. rewrite E1, E2.
     enough (n2 = f n1) as ->. split. reflexivity. Lproc.
     eapply (f_equal embed) in E2. rewrite unembedP in E2.

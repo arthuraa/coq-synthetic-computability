@@ -27,8 +27,10 @@ Definition eff_insep (A B : nat -> Prop) : Prop :=
     (forall x, W i x -> ~ W j x) ->
     exists k, hasvalue (f i j) k /\ ~ W i k /\ ~ W j k.
 
+(* TODO: come back to this once the builds work.
 Lemma temp (A A' B : nat -> Prop) :
   enumerable A' -> eff_insep A B -> (forall x, A x -> A' x) -> (forall x, A' x -> ~ B x) -> eff_insep A' B.
+*)
 
 Lemma W_union :
   exists u : nat -> nat -> nat,

@@ -13,9 +13,19 @@
     rocq-mcp.flake = false;
     pytanque.url = "github:LLM4Rocq/pytanque";
     pytanque.flake = false;
+    # Needed by theories/Models (T_L, LMuRecursion, etc. depend on
+    # Undecidability.L.*). The rocq-9.0 branch's own _CoqProject comments out
+    # most of L/ (including Functions/{Encoding,Eval}.v) -- empirically this
+    # is NOT a real Rocq-9 incompatibility, just a build wired without
+    # MetaRocq; see the postPatch/propagatedBuildInputs below. Downstream
+    # flakes should set
+    # `inputs.coq-synthetic-computability.inputs.coq-library-undecidability.follows`
+    # to avoid a second, possibly-drifted copy.
+    coq-library-undecidability.url = "github:uds-psl/coq-library-undecidability/rocq-9.0";
+    coq-library-undecidability.flake = false;
   };
 
-  outputs = inputs@{ self, flake-parts, nixpkgs, rocq-mcp, pytanque, ... }:
+  outputs = inputs@{ self, flake-parts, nixpkgs, rocq-mcp, pytanque, coq-library-undecidability, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         # To import an internal flake module: ./other.nix
@@ -79,6 +89,7 @@
                 final.coq
                 final.equations
                 final.stdpp
+                final.coq-library-undecidability
               ];
               # Rocq 9.0 reads dependency paths from ROCQPATH; the nixpkgs coq
               # setup hook still exports COQPATH and Rocq prints a deprecation
@@ -97,13 +108,40 @@
                 pushd theories
                 cp _CoqProject.in _CoqProject
                 find . -name '*.v' -type f \
-                  ! -path './Models/*' \
                   ! -path './ArithmeticHierarchy/*' \
                   | sed 's|^\./||' | sort >> _CoqProject
                 coq_makefile -f _CoqProject -o Makefile.coq
                 popd
               '';
               makeFlags = [ "-C" "theories" "-f" "Makefile.coq" ];
+            };
+            # rocq-9.0's own _CoqProject comments out most of theories/L/
+            # (including Functions/{Encoding,Eval}.v, needed by our
+            # Models/CT.v). Empirically (tested in an isolated worktree
+            # against this exact commit) all 69 L/ files compile cleanly
+            # under Rocq 9.0.1 once the MetaRocq packages below are on the
+            # loadpath -- the exclusion was a build-wiring gap upstream, not
+            # a real incompatibility. So: un-comment those lines and add the
+            # deps they need.
+            coq-library-undecidability = prev.mkCoqDerivation {
+              pname = "coq-library-undecidability";
+              version = coq-library-undecidability.outPath;
+              # L/Tactics/Extract.v needs the equations OCaml findlib plugin.
+              mlPlugin = true;
+              propagatedBuildInputs = [
+                final.coq
+                final.equations
+                final.metarocq-template-rocq
+                final.metarocq-utils
+                final.metarocq-common
+                final.metarocq-pcuic
+                final.metarocq-template-pcuic
+                final.metarocq-safechecker
+                final.metarocq-erasure
+              ];
+              postPatch = ''
+                sed -i -E 's/^#(L\/.*\.v)$/\1/' theories/_CoqProject
+              '';
             };
           });
 

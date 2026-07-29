@@ -345,7 +345,7 @@ Qed.
 
 Definition F1 {X} (T : nat -> list X) :=  (fun n => let (n, m) := unembed n in nth_error (T n) m).
 
-Global Instance term_F1 {X} {H : encodable X} :  @computable ((nat -> list X) -> nat -> option X) ((! nat ~> ! list X) ~> ! nat ~> ! option X) (@F1 X).
+Global Instance term_F1 {X} {H : encodable X} :  @computable ((nat -> list X) -> nat -> option X) ((! nat ~> ! (list X)) ~> ! nat ~> ! (option X)) (@F1 X).
 Proof.
   extract.  
 Qed.
