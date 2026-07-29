@@ -1,6 +1,6 @@
 From SyntheticComputability.Synthetic Require Import DecidabilityFacts EnumerabilityFacts.
 Require Import SyntheticComputability.Axioms.EA.
-From SyntheticComputability.ReducibilityDegrees Require Import simple.
+From SyntheticComputability.ReducibilityDegrees Require Import simple EffectiveInseparabilityGeneric.
 From SyntheticComputability.CRM Require Import principles.
 From SyntheticComputability.Basic Require Import Recursion.
 From SyntheticComputability.Axioms Require Import EPF Equivalence.
@@ -510,6 +510,32 @@ Lemma eff_insep_A0_B1 : eff_insep A0 B1.
 Proof.
   destruct γ_RaceGraph'_spec as [γ Hγ].
   exact (eff_insep_A0_B1_rel γ Hγ).
+Qed.
+
+(* --- Tying this to the generic argument (EffectiveInseparabilityGeneric.v):
+   eff_insep A0 B1 is definitionally eff_insep_shape W A0 B1 (eff_insep's
+   own body already *is* eff_insep_shape's body, mod substituting this
+   section's ambient W for the explicit parameter), and that in turn is
+   exactly an instance of eff_insep_A0_B1_generic, instantiated with this
+   section's W/semidec_of/Θ_ours/η. Models/EffectiveInseparability_L.v's
+   eff_insep_A0_B1_L is shown to be the *same* instantiation recipe with
+   W_L/semidec_of_L/Θ_ours_L/η_L in place of these -- see the analogous
+   lemma there. *)
+
+Lemma eff_insep_iff_shape (A B : nat -> Prop) : eff_insep A B <-> eff_insep_shape W A B.
+Proof. reflexivity. Qed.
+
+Lemma eff_insep_A0_B1_rel_via_generic (γ : nat -> nat)
+      (Hγ : forall c, enumerator (φ (γ c)) (RaceGraph' c)) :
+  eff_insep_shape W A0 B1.
+Proof.
+  exact (eff_insep_A0_B1_generic W semidec_of semidec_of_spec Θ_ours (η γ) (θ_ours_η γ Hγ)).
+Qed.
+
+Lemma eff_insep_A0_B1_via_generic : eff_insep_shape W A0 B1.
+Proof.
+  destruct γ_RaceGraph'_spec as [γ Hγ].
+  exact (eff_insep_A0_B1_rel_via_generic γ Hγ).
 Qed.
 
 End Mη.

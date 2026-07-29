@@ -19,6 +19,7 @@ Require Import SyntheticComputability.Shared.partial.
 Require Import SyntheticComputability.Shared.embed_nat.
 Require Import SyntheticComputability.Synthetic.Definitions.
 Require Import SyntheticComputability.Synthetic.EnumerabilityFacts.
+From SyntheticComputability.ReducibilityDegrees Require Import EffectiveInseparabilityGeneric.
 Require Import SyntheticComputability.Axioms.EA.
 
 (* Deliberately NOT importing SyntheticComputability.Models.LMuRecursion or
@@ -551,4 +552,24 @@ split.
   pose proof (raceVal_wins_right_L i j (η_L i j) Hjwin Hilose) as Hrace1.
   pose proof (proj2 (A0_at_k_L i j) Hrace1) as HA0k.
   apply Hnk. apply H1. exact HA0k.
+Qed.
+
+(* --- Tying this to the generic argument (ReducibilityDegrees/
+   EffectiveInseparabilityGeneric.v): eff_insep_L is definitionally
+   eff_insep_shape W_L (eff_insep_L's own body already *is*
+   eff_insep_shape's body, mod substituting W_L for the explicit
+   parameter), and eff_insep_A0_B1_L is exactly an instance of
+   eff_insep_A0_B1_generic instantiated with
+   W_L/semidec_of_L/Θ_ours_L/η_L -- the *same* instantiation recipe
+   ReducibilityDegrees/EffectiveInseparability.v uses with
+   W/semidec_of/Θ_ours/η, formally tying the two constructions together
+   as instances of one shared argument rather than independently-proved
+   lookalikes. ------------------------------------------------------- *)
+
+Lemma eff_insep_L_iff_shape (A B : nat -> Prop) : eff_insep_L A B <-> eff_insep_shape W_L A B.
+Proof. reflexivity. Qed.
+
+Lemma eff_insep_A0_B1_L_via_generic : eff_insep_shape W_L A0_L B1_L.
+Proof.
+  exact (eff_insep_A0_B1_generic W_L semidec_of_L semidec_of_L_spec Θ_ours_L η_L θ_ours_η_L).
 Qed.
