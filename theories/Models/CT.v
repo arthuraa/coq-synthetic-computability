@@ -28,7 +28,7 @@ Definition app' '(s,t) := L.app s t.
 Global Instance app'_computable : computable app'.
 Proof.
   extract.
-Qed.  
+Qed.
 
 Global Instance list_enumerator_term_computable : computable list_enumerator_term.
 Proof.
@@ -36,13 +36,13 @@ Proof.
   match n with
   | 0 => []
   | S n => FFF n
-           ++ map var (L_nat n) 
-           ++ map lam (FFF n) 
+           ++ map var (L_nat n)
+           ++ map lam (FFF n)
            ++ map app' (list_prod (FFF n) (FFF n))
   end)). extract.
 Qed.
 
-Definition unembed' := (fix F (k : nat) := 
+Definition unembed' := (fix F (k : nat) :=
   match k with 0 => (0,0) | S n => match fst (F n) with 0 => (S (snd (F n)), 0) | S x => (x, S (snd (F n))) end end).
 
 Global Instance unembed_computable : computable unembed.
@@ -118,7 +118,7 @@ Proof with (try eapply cum_ge'; eauto; lia).
   intros t. induction t as [m | t1 [n1 IH1] t2 [n2 IH2] | t [n IH]].
   - destruct (el_T m) as [n Hn]. exists (S n). cbn. in_app 2. eauto.
   - exists (1 + n1 + n2). cbn. in_app 4.
-    in_collect (t1, t2)...  
+    in_collect (t1, t2)...
   - exists (1 + n). cbn. in_app 3. eauto.
 Qed.
 
@@ -174,7 +174,7 @@ Proof.
   remember ((lam (L.app t (var 0)))) as s.
   assert (Hs : proc s). { subst s. Lproc. }
   assert (Es : L.app s (enc ⟨ x, y ⟩) == L.app t (enc ⟨ x, y ⟩)). {
-    rewrite Heqs. etransitivity. econstructor. eapply step_beta. cbn. 
+    rewrite Heqs. etransitivity. econstructor. eapply step_beta. cbn.
     rewrite Ht. reflexivity. Lproc. auto. }
   setoid_rewrite I_term_correct'.
   split.
@@ -263,7 +263,7 @@ Lemma partial_to_total `{Part : partiality} (f : nat ↛ nat) :
 Proof.
   exists (fun arg => let (x,n) := unembed arg in match seval (f x) n with Some a => S a | None => 0 end).
   intros x a. split.
-  - intros [n H] % seval_hasvalue. 
+  - intros [n H] % seval_hasvalue.
     exists n. now rewrite embedP, H.
   - intros [n H]. rewrite embedP in H.
     eapply seval_hasvalue. exists n.
@@ -361,7 +361,7 @@ Proof.
     eapply LMuRecursion.mu_spec in Hcon as [n Hn].
     + edestruct LMuRecursion.mu_complete as [n' Hn'].
       4: rewrite Hn' in He.
-      Lproc. 2: eauto. eauto. 
+      Lproc. 2: eauto. eauto.
       exists n'. destruct (f' ⟨x, n'⟩) eqn:Ef.
       * assert (lambda (enc v)) as [s Hs] by Lproc.
         edestruct Omega_diverges.
@@ -377,7 +377,7 @@ Proof.
     specialize (Ht ⟨x, n⟩) as Ht'.
     edestruct LMuRecursion.mu_complete as [n' Hn'].
     4: rewrite Hn'. 1:Lproc. eauto.
-    Lsimpl. 
+    Lsimpl.
     instantiate (1 := n). Lsimpl.
     rewrite Ht, Hn. now Lsimpl.
     Lsimpl. eapply LMuRecursion.mu_sound in Hn' as Hn_.
@@ -401,7 +401,7 @@ Proof.
   intros f. destruct (epf (fun x => ret (f x))) as [c Hc].
   exists c. intros x. specialize (Hc x (f x)). cbn in Hc.
   destruct Hc as [_ Hc].
-  unfold θ_L in *.  eapply Hc. 
+  unfold θ_L in *.  eapply Hc.
   eapply (ret_hasvalue (partiality := monotonic_functions)).
 Qed.
 
@@ -514,7 +514,7 @@ Proof.
   econstructor. exists (lam (lam (t ((ext embed) ((ext (@pair nat nat) 1 0)))))). cbn.
   split. Lproc.
   intros. subst.
-  eexists. split. 
+  eexists. split.
   econstructor 2. eapply step_beta.
   cbn. rewrite !subst_closed; try Lproc. reflexivity.
   2:reflexivity. Lproc.
@@ -526,7 +526,7 @@ Proof.
   etransitivity.
   econstructor 2. eapply step_beta.
   cbn. rewrite !subst_closed. all: try Lproc. reflexivity.
-  reflexivity. eapply eval_iff in H2. now Lsimpl. 
+  reflexivity. eapply eval_iff in H2. now Lsimpl.
 Qed.
 
 Lemma CT_L_semidecidable_to_CT_L_enumerable :
@@ -579,14 +579,14 @@ Proof.
   Lsimpl.
   edestruct (mu_complete).
   4: rewrite H0.
-  - Lproc. 
+  - Lproc.
   - intros n0. eexists. Lsimpl. reflexivity.
   - instantiate (1 := n). Lsimpl.
-    unfold h. now rewrite H, embedP, Nat.eqb_refl. 
+    unfold h. now rewrite H, embedP, Nat.eqb_refl.
   - Lsimpl.
     eapply mu_sound in H0 as (m & -> % inj_enc & H2 & H3); try Lproc.
     2: intros; eexists; now Lsimpl.
-    assert (Heq : h x m = true). { 
+    assert (Heq : h x m = true). {
       eapply enc_extinj. rewrite <- H2. symmetry. now Lsimpl.
     }
     unfold h in Heq.
