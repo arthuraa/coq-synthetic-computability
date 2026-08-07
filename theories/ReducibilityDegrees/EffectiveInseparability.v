@@ -538,4 +538,17 @@ Proof.
   exact (eff_insep_A0_B1_rel_via_generic γ Hγ).
 Qed.
 
+(* --- eff_insep_shape's own creative payoff. Callers whose main theorem
+   is stated in the eff_insep_shape form (e.g. an eff_insep_shape_W_iff
+   transport onto their own numbering, as the KACC development's
+   Theorem19_MComplete.v does) get "A is creative" directly, without
+   having to unfold eff_insep_shape back into eff_insep by hand first --
+   matches eff_insep_to_creative's naming, just one step upstream of it. *)
+
+Lemma eff_insep_shape_to_creative (MP_assm : MP) (A B : nat -> Prop) :
+  eff_insep_shape W A B -> creative A.
+Proof.
+  rewrite <- eff_insep_iff_shape. exact (eff_insep_to_creative MP_assm A B).
+Qed.
+
 End Mη.
