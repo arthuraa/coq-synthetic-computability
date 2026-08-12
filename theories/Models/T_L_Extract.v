@@ -2,7 +2,8 @@
    `T_L_computable`/`enum_term_computable` TODOs: T_L is, in fact,
    genuinely and uniformly extractable to L, for arbitrary runtime
    (c, x, n) -- not just a single known instance (contra the earlier,
-   more limited per-instance workaround in Models/PerInstanceGuard.v).
+   more limited per-instance workaround in the now-removed
+   Models/PerInstanceGuard.v).
 
    Kept as a standalone file (not folded into CT.v) so CT.v's original
    TODOs can be filled in later by hand, at leisure, rather than
