@@ -17,6 +17,7 @@ Require Import Undecidability.L.Util.L_facts.
 Require Import Undecidability.L.Tactics.LTactics.
 Require Import SyntheticComputability.Shared.partial.
 Require Import SyntheticComputability.Shared.embed_nat.
+Require Import SyntheticComputability.Shared.mu_nat.
 Require Import SyntheticComputability.Synthetic.Definitions.
 Require Import SyntheticComputability.Synthetic.EnumerabilityFacts.
 From SyntheticComputability.ReducibilityDegrees Require Import EffectiveInseparabilityGeneric.
@@ -331,20 +332,6 @@ Proof.
 intros n. unfold raceP. eexists. now Lsimpl.
 Qed.
 
-(* A minimal witness for a boolean predicate over nat is unique -- pure
-   arithmetic, no L-term reasoning needed (mirrors PorRace.v's
-   minimal_unique, from the earlier discarded Por-based attempt). *)
-Lemma minimal_unique_L (P : nat -> bool) (n1 n2 : nat) :
-  P n1 = true -> (forall m, m < n1 -> P m = false) ->
-  P n2 = true -> (forall m, m < n2 -> P m = false) ->
-  n1 = n2.
-Proof.
-intros H1 Hm1 H2 Hm2.
-destruct (Compare_dec.lt_eq_lt_dec n1 n2) as [[Hlt|Heq]|Hgt]; auto.
-- specialize (Hm2 n1 Hlt). congruence.
-- specialize (Hm1 n2 Hgt). congruence.
-Qed.
-
 Lemma η_L_reduce i j y v :
   L.app (η_L_body i j) (enc y) == enc v
   <-> exists n, L.app LMuRecursion.mu (raceP i j y) == enc n
@@ -411,7 +398,7 @@ split.
     { unfold raceP in Htrue0. LsimplHypo. Lrewrite in Htrue0. symmetry in Htrue0. now apply enc_extinj in Htrue0. }
     assert (Hmin0' : forall m, m < n0 -> raceBitOn (tcode i) (tcode j) y m = false).
     { intros m Hm. specialize (Hmin0 m Hm). unfold raceP in Hmin0. LsimplHypo. Lrewrite in Hmin0. symmetry in Hmin0. now apply enc_extinj in Hmin0. }
-    assert (Hn0n : n0 = n) by (eapply minimal_unique_L; eauto).
+    assert (Hn0n : n0 = n) by (eapply minimal_unique; eauto).
     subst n0. exact Hn0.
   + unfold winnerBitOn. rewrite <- semidec_semidecHaltIn. exact Hv.
 Qed.

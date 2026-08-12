@@ -81,13 +81,28 @@ Proof.
   specialize (H3 m ltac:(lia)). destruct (d m); firstorder lia.
 Qed.
 
-Lemma mu_nat_dep_irrel P d H1 H2 : 
+Lemma mu_nat_dep_irrel P d H1 H2 :
   proj1_sig (mu_nat_dep P d H1) = proj1_sig (mu_nat_dep P d H2).
 Proof.
-  match goal with [ |- ?L = ?R ] => 
+  match goal with [ |- ?L = ?R ] =>
     (assert (L < R \/ L = R \/ L > R) as [H | [H | H]] by lia)
   end.
   - eapply mu_nat_dep_min in H. repeat destruct mu_nat_dep; cbn in *; tauto.
   - eauto.
   - eapply mu_nat_dep_min in H. repeat destruct mu_nat_dep; cbn in *; tauto.
+Qed.
+
+(* A minimal witness of a boolean predicate over nat is unique -- pure
+   arithmetic, shared by every construction that races/searches two or
+   more independent semideciders and needs to know the first step at
+   which either one answers is uniquely determined. *)
+Lemma minimal_unique (P : nat -> bool) (n1 n2 : nat) :
+  P n1 = true -> (forall m, m < n1 -> P m = false) ->
+  P n2 = true -> (forall m, m < n2 -> P m = false) ->
+  n1 = n2.
+Proof.
+intros H1 Hm1 H2 Hm2.
+destruct (Compare_dec.lt_eq_lt_dec n1 n2) as [[Hlt|Heq]|Hgt]; auto.
+- specialize (Hm2 n1 Hlt). congruence.
+- specialize (Hm1 n2 Hgt). congruence.
 Qed.

@@ -16,6 +16,7 @@ Require Import Undecidability.L.Datatypes.LBool.
 Require Import Undecidability.L.Datatypes.LTerm.
 Require Import SyntheticComputability.Shared.partial.
 Require Import SyntheticComputability.Shared.embed_nat.
+Require Import SyntheticComputability.Shared.mu_nat.
 
 Require Import ssreflect.
 
@@ -192,17 +193,6 @@ split.
   transitivity
     (L.app (L.app (ext (T_L' c x n)) (lam (var 0))) (enc 0)); [now Lsimpl |].
   rewrite Hval. now Lsimpl.
-Qed.
-
-Lemma minimal_unique (P : nat -> bool) (n1 n2 : nat) :
-  P n1 = true -> (forall m, m < n1 -> P m = false) ->
-  P n2 = true -> (forall m, m < n2 -> P m = false) ->
-  n1 = n2.
-Proof.
-intros H1 Hm1 H2 Hm2.
-destruct (Compare_dec.lt_eq_lt_dec n1 n2) as [[Hlt|Heq]|Hgt]; auto.
-- specialize (Hm2 n1 Hlt). congruence.
-- specialize (Hm1 n2 Hgt). congruence.
 Qed.
 
 Lemma s_TL_val_iff c x v :
