@@ -4,8 +4,8 @@
    for the abstract version this mirrors; see there for the overall
    structure of the argument.
 
-   Fully proved, no Admitted/axioms: eff_insep_A0_B1_L at the bottom of
-   this file is the deliverable. η_L is built via LMuRecursion.mu (an
+   Fully proved, no Admitted/axioms: eff_insep_A0_B1_L_via_generic at the
+   bottom of this file is the deliverable. η_L is built via LMuRecursion.mu (an
    L-level unbounded-search combinator) applied to a hand-extracted race
    predicate (raceBitOn/winnerBitOn); see the comment above
    SyntheticComputability.Models.LMuRecursion's Require, below, for why
@@ -75,20 +75,6 @@ Definition Θ_ours_L (c y : nat) : part nat := θ_L c y.
 Definition A0_L (z : nat) : Prop := Θ_ours_L (fst (unembed z)) (snd (unembed z)) =! 1.
 Definition B1_L (z : nat) : Prop := Θ_ours_L (fst (unembed z)) (snd (unembed z)) =! 0.
 
-(* --- 2. eff_insep, restated against W_L (same shape as the abstract
-   version in ReducibilityDegrees/EffectiveInseparability.v, just with W_L
-   in place of the abstract EA-derived W) ------------------------------- *)
-
-Definition eff_insep_L (A B : nat -> Prop) : Prop :=
-  enumerable A /\ enumerable B /\
-  (forall x, A x -> ~ B x) /\
-  exists f : nat -> nat -> part nat,
-    forall i j,
-    (forall x, A x -> W_L i x) ->
-    (forall x, B x -> W_L j x) ->
-    (forall x, W_L i x -> ~ W_L j x) ->
-    exists k, hasvalue (f i j) k /\ ~ W_L i k /\ ~ W_L j k.
-
 (* --- 3. THE NEW PIECE: η_L represents raceVal_L as an actual L-term,
    built via LMuRecursion.mu (an L-level unbounded-search combinator)
    applied to a hand-extracted "race predicate", rather than by racing two
@@ -130,11 +116,10 @@ Require Import Undecidability.L.Datatypes.LBool.
 (* Deliberately NOT Import: Undecidability.L.Functions.Eval transitively
    re-exports Undecidability.L.Computability.Seval, which also defines
    `seval`, shadowing the *abstract* part-level `seval`
-   (SyntheticComputability.Shared.partial's class field, used unqualified
-   by A0_L_enumerable/B1_L_enumerable below) for the rest of this file.
-   Refer to eva/eva_equiv/eva_seval/app_converges/Omega_diverges via the
-   qualified name Seval.<name> instead (nothing here needs doesHaltIn,
-   Eval.v's own distinctive content, unqualified). *)
+   (SyntheticComputability.Shared.partial's class field). Refer to
+   eva/eva_equiv/eva_seval/app_converges/Omega_diverges via the qualified
+   name Seval.<name> instead (nothing here needs doesHaltIn, Eval.v's own
+   distinctive content, unqualified). *)
 Require Undecidability.L.Functions.Eval.
 Require Undecidability.L.Computability.Seval.
 Require Import Undecidability.L.Tactics.Lbeta_nonrefl.
@@ -431,143 +416,14 @@ split.
   + unfold winnerBitOn. rewrite <- semidec_semidecHaltIn. exact Hv.
 Qed.
 
-(* --- 4b. A0_L / B1_L membership at the diagonal point ------------------ *)
-
-Lemma A0_at_k_L i j : A0_L (embed (η_L i j, η_L i j)) <-> raceVal_L i j (η_L i j) =! 1.
-Proof. rewrite /A0_L embedP /=. exact: θ_ours_η_L. Qed.
-
-Lemma B1_at_k_L i j : B1_L (embed (η_L i j, η_L i j)) <-> raceVal_L i j (η_L i j) =! 0.
-Proof. rewrite /B1_L embedP /=. exact: θ_ours_η_L. Qed.
-
-(* --- 5b. race-resolution helpers --------------------------------------- *)
-
-Lemma raceVal_wins_left_L i j y :
-  (exists n, semidec_of_L i (embed (y,y)) n = true) ->
-  (forall n, semidec_of_L j (embed (y,y)) n = false) ->
-  raceVal_L i j y =! 0.
-Proof.
-intros [n0 Hn0] Hjfalse.
-destruct (mu_tot_ter Hn0) as [n Hn].
-apply mu_tot_hasvalue in Hn as [Htrue Hmin].
-apply raceVal_iff_race_L.
-exists n. split; [left; exact Htrue |].
-split.
-- intros m Hlt. split; [apply Hmin; exact Hlt | apply Hjfalse].
-- rewrite Htrue. reflexivity.
-Qed.
-
-Lemma raceVal_wins_right_L i j y :
-  (exists n, semidec_of_L j (embed (y,y)) n = true) ->
-  (forall n, semidec_of_L i (embed (y,y)) n = false) ->
-  raceVal_L i j y =! 1.
-Proof.
-intros [n0 Hn0] Hifalse.
-destruct (mu_tot_ter Hn0) as [n Hn].
-apply mu_tot_hasvalue in Hn as [Htrue Hmin].
-apply raceVal_iff_race_L.
-exists n. split; [right; exact Htrue |].
-split.
-- intros m Hlt. split; [apply Hifalse | apply Hmin; exact Hlt].
-- rewrite (Hifalse n). reflexivity.
-Qed.
-
-(* --- 5c. A0_L / B1_L enumerable, via seval on Θ_ours_L ----------------- *)
-
-Lemma A0_L_enumerable : enumerable A0_L.
-Proof.
-apply (proj2 (enum_iff A0_L)).
-exists (fun z n =>
-  match seval (Θ_ours_L (fst (unembed z)) (snd (unembed z))) n with
-  | Some v => Nat.eqb v 1
-  | None => false
-  end).
-intros z. unfold A0_L. split.
-- intros [n Hn] % seval_hasvalue.
-  exists n. rewrite Hn. apply PeanoNat.Nat.eqb_refl.
-- intros [n Hn].
-  destruct (seval (Θ_ours_L (fst (unembed z)) (snd (unembed z))) n) as [v0|] eqn:E;
-    [| discriminate].
-  apply PeanoNat.Nat.eqb_eq in Hn. subst v0.
-  apply seval_hasvalue. exists n. exact E.
-Qed.
-
-Lemma B1_L_enumerable : enumerable B1_L.
-Proof.
-apply (proj2 (enum_iff B1_L)).
-exists (fun z n =>
-  match seval (Θ_ours_L (fst (unembed z)) (snd (unembed z))) n with
-  | Some v => Nat.eqb v 0
-  | None => false
-  end).
-intros z. unfold B1_L. split.
-- intros [n Hn] % seval_hasvalue.
-  exists n. rewrite Hn. apply PeanoNat.Nat.eqb_refl.
-- intros [n Hn].
-  destruct (seval (Θ_ours_L (fst (unembed z)) (snd (unembed z))) n) as [v0|] eqn:E;
-    [| discriminate].
-  apply PeanoNat.Nat.eqb_eq in Hn. subst v0.
-  apply seval_hasvalue. exists n. exact E.
-Qed.
-
-(* --- 6. Main theorem: check the pieces combine correctly --------------- *)
-
-Theorem eff_insep_A0_B1_L : eff_insep_L A0_L B1_L.
-Proof.
-split; [exact A0_L_enumerable |].
-split; [exact B1_L_enumerable |].
-split.
-- intros z HA0 HB1.
-  unfold A0_L in HA0. unfold B1_L in HB1.
-  pose proof (hasvalue_det HA0 HB1) as Hcontra.
-  discriminate Hcontra.
-- exists (fun i j => ret (embed (η_L i j, η_L i j))).
-  intros i j H1 H2 H3.
-  exists (embed (η_L i j, η_L i j)).
-  split; [apply (@ret_hasvalue partial.implementation.monotonic_functions) |].
-  assert (Hnk : ~ W_L i (embed (η_L i j, η_L i j))).
-  { intros HWi.
-    pose proof (H3 (embed (η_L i j, η_L i j)) HWi) as HWjneg.
-    assert (Hiwin : exists n, semidec_of_L i (embed (η_L i j, η_L i j)) n = true).
-    { apply (semidec_of_L_spec i (embed (η_L i j, η_L i j))). exact HWi. }
-    assert (Hjlose : forall n, semidec_of_L j (embed (η_L i j, η_L i j)) n = false).
-    { intros n.
-      destruct (semidec_of_L j (embed (η_L i j, η_L i j)) n) eqn:Ej; [exfalso | reflexivity].
-      apply HWjneg. apply (semidec_of_L_spec j (embed (η_L i j, η_L i j))).
-      exists n. exact Ej.
-    }
-    pose proof (raceVal_wins_left_L i j (η_L i j) Hiwin Hjlose) as Hrace0.
-    pose proof (proj2 (B1_at_k_L i j) Hrace0) as HB1k.
-    apply HWjneg. apply H2. exact HB1k.
-  }
-  split; [exact Hnk |].
-  intros HWj.
-  assert (Hjwin : exists n, semidec_of_L j (embed (η_L i j, η_L i j)) n = true).
-  { apply (semidec_of_L_spec j (embed (η_L i j, η_L i j))). exact HWj. }
-  assert (Hilose : forall n, semidec_of_L i (embed (η_L i j, η_L i j)) n = false).
-  { intros n.
-    destruct (semidec_of_L i (embed (η_L i j, η_L i j)) n) eqn:Ei; [exfalso | reflexivity].
-    apply Hnk. apply (semidec_of_L_spec i (embed (η_L i j, η_L i j))).
-    exists n. exact Ei.
-  }
-  pose proof (raceVal_wins_right_L i j (η_L i j) Hjwin Hilose) as Hrace1.
-  pose proof (proj2 (A0_at_k_L i j) Hrace1) as HA0k.
-  apply Hnk. apply H1. exact HA0k.
-Qed.
-
-(* --- Tying this to the generic argument (ReducibilityDegrees/
-   EffectiveInseparabilityGeneric.v): eff_insep_L is definitionally
-   eff_insep_shape W_L (eff_insep_L's own body already *is*
-   eff_insep_shape's body, mod substituting W_L for the explicit
-   parameter), and eff_insep_A0_B1_L is exactly an instance of
-   eff_insep_A0_B1_generic instantiated with
+(* --- Payoff: eff_insep_A0_B1_L_via_generic is exactly
+   eff_insep_A0_B1_generic (ReducibilityDegrees/
+   EffectiveInseparabilityGeneric.v) instantiated with
    W_L/semidec_of_L/Θ_ours_L/η_L -- the *same* instantiation recipe
    ReducibilityDegrees/EffectiveInseparability.v uses with
-   W/semidec_of/Θ_ours/η, formally tying the two constructions together
-   as instances of one shared argument rather than independently-proved
-   lookalikes. ------------------------------------------------------- *)
-
-Lemma eff_insep_L_iff_shape (A B : nat -> Prop) : eff_insep_L A B <-> eff_insep_shape W_L A B.
-Proof. reflexivity. Qed.
+   W/semidec_of/Θ_ours/η, formally tying this construction to that
+   shared generic argument rather than being an independently-proved
+   lookalike. ------------------------------------------------------- *)
 
 Lemma eff_insep_A0_B1_L_via_generic : eff_insep_shape W_L A0_L B1_L.
 Proof.
