@@ -17,11 +17,17 @@
     # Undecidability.L.*). The rocq-9.0 branch's own _CoqProject comments out
     # most of L/ (including Functions/{Encoding,Eval}.v) -- empirically this
     # is NOT a real Rocq-9 incompatibility, just a build wired without
-    # MetaRocq; see the postPatch/propagatedBuildInputs below. Downstream
+    # MetaRocq; see the postPatch/propagatedBuildInputs below (a no-op here,
+    # since the fork already has L/ uncommented natively -- kept so this
+    # flake still works standalone against a plain upstream checkout too).
+    # Pinned to jstrattonsmith/coq-library-undecidability's enable-L-nix-9.0
+    # branch (0 commits ahead/behind uds-psl/coq-library-undecidability's
+    # rocq-9.0 otherwise, checked 2026-08-31) so this and
+    # ../commutative-kleene-algebra always resolve the same source. Downstream
     # flakes should set
     # `inputs.coq-synthetic-computability.inputs.coq-library-undecidability.follows`
     # to avoid a second, possibly-drifted copy.
-    coq-library-undecidability.url = "github:uds-psl/coq-library-undecidability/rocq-9.0";
+    coq-library-undecidability.url = "github:jstrattonsmith/coq-library-undecidability/enable-L-nix-9.0";
     coq-library-undecidability.flake = false;
   };
 
