@@ -25,8 +25,6 @@ Section EffInsepShape.
 
 Context {Part : partiality}.
 
-(* Exactly ReducibilityDegrees/EffectiveInseparability.v's `eff_insep`, with
-   the abstract-EA-derived W replaced by an explicit parameter. *)
 Definition eff_insep_shape (W : nat -> nat -> Prop) (A B : nat -> Prop) : Prop :=
   enumerable A /\ enumerable B /\
   (forall x, A x -> ~ B x) /\
@@ -46,17 +44,17 @@ Variable W : nat -> nat -> Prop.
 Variable semidec_of : nat -> nat -> nat -> bool.
 Hypothesis semidec_of_spec : forall c, semi_decider (semidec_of c) (W c).
 
-Variable Θ_ours : nat -> nat -> part nat.
+Variable Θ_num : nat -> nat -> part nat.
 
 Definition raceVal_g (i j y : nat) : part nat :=
   bind (mu (fun n => ret (orb (semidec_of i (embed (y,y)) n) (semidec_of j (embed (y,y)) n))))
        (fun n => if semidec_of i (embed (y,y)) n then ret 0 else ret 1).
 
-Definition A0_g (z : nat) : Prop := Θ_ours (fst (unembed z)) (snd (unembed z)) =! 1.
-Definition B1_g (z : nat) : Prop := Θ_ours (fst (unembed z)) (snd (unembed z)) =! 0.
+Definition A0_g (z : nat) : Prop := Θ_num (fst (unembed z)) (snd (unembed z)) =! 1.
+Definition B1_g (z : nat) : Prop := Θ_num (fst (unembed z)) (snd (unembed z)) =! 0.
 
 Variable η : nat -> nat -> nat.
-Hypothesis Hθη : forall i j y v, Θ_ours (η i j) y =! v <-> raceVal_g i j y =! v.
+Hypothesis Hθη : forall i j y v, Θ_num (η i j) y =! v <-> raceVal_g i j y =! v.
 
 Lemma A0_at_k_g i j : A0_g (embed (η i j, η i j)) <-> raceVal_g i j (η i j) =! 1.
 Proof. rewrite /A0_g embedP /=. exact: Hθη. Qed.
@@ -133,7 +131,7 @@ Lemma A0_g_enumerable : enumerable A0_g.
 Proof.
 apply (proj2 (enum_iff A0_g)).
 exists (fun z n =>
-  match seval (Θ_ours (fst (unembed z)) (snd (unembed z))) n with
+  match seval (Θ_num (fst (unembed z)) (snd (unembed z))) n with
   | Some v => Nat.eqb v 1
   | None => false
   end).
@@ -141,7 +139,7 @@ intros z. unfold A0_g. split.
 - intros [n Hn] % seval_hasvalue.
   exists n. rewrite Hn. apply PeanoNat.Nat.eqb_refl.
 - intros [n Hn].
-  destruct (seval (Θ_ours (fst (unembed z)) (snd (unembed z))) n) as [v0|] eqn:E;
+  destruct (seval (Θ_num (fst (unembed z)) (snd (unembed z))) n) as [v0|] eqn:E;
     [| discriminate].
   apply PeanoNat.Nat.eqb_eq in Hn. subst v0.
   apply seval_hasvalue. exists n. exact E.
@@ -151,7 +149,7 @@ Lemma B1_g_enumerable : enumerable B1_g.
 Proof.
 apply (proj2 (enum_iff B1_g)).
 exists (fun z n =>
-  match seval (Θ_ours (fst (unembed z)) (snd (unembed z))) n with
+  match seval (Θ_num (fst (unembed z)) (snd (unembed z))) n with
   | Some v => Nat.eqb v 0
   | None => false
   end).
@@ -159,7 +157,7 @@ intros z. unfold B1_g. split.
 - intros [n Hn] % seval_hasvalue.
   exists n. rewrite Hn. apply PeanoNat.Nat.eqb_refl.
 - intros [n Hn].
-  destruct (seval (Θ_ours (fst (unembed z)) (snd (unembed z))) n) as [v0|] eqn:E;
+  destruct (seval (Θ_num (fst (unembed z)) (snd (unembed z))) n) as [v0|] eqn:E;
     [| discriminate].
   apply PeanoNat.Nat.eqb_eq in Hn. subst v0.
   apply seval_hasvalue. exists n. exact E.

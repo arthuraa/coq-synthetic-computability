@@ -65,16 +65,14 @@ intros x; unfold semidec_of_L, W_L, ter; split.
   exists v, n. cbn. exact E.
 Qed.
 
-(* --- 1. raceVal_L / Θ_ours_L ------------------------------------------ *)
+(* --- 1. raceVal_L / θ_L ------------------------------------------------ *)
 
 Definition raceVal_L (i j y : nat) : part nat :=
   bind (mu (fun n => ret (orb (semidec_of_L i (embed (y,y)) n) (semidec_of_L j (embed (y,y)) n))))
        (fun n => if semidec_of_L i (embed (y,y)) n then ret 0 else ret 1).
 
-Definition Θ_ours_L (c y : nat) : part nat := θ_L c y.
-
-Definition A0_L (z : nat) : Prop := Θ_ours_L (fst (unembed z)) (snd (unembed z)) =! 1.
-Definition B1_L (z : nat) : Prop := Θ_ours_L (fst (unembed z)) (snd (unembed z)) =! 0.
+Definition A0_L (z : nat) : Prop := θ_L (fst (unembed z)) (snd (unembed z)) =! 1.
+Definition B1_L (z : nat) : Prop := θ_L (fst (unembed z)) (snd (unembed z)) =! 0.
 
 (* --- 3. THE NEW PIECE: η_L represents raceVal_L as an actual L-term,
    built via LMuRecursion.mu (an L-level unbounded-search combinator)
@@ -322,7 +320,7 @@ split.
     * rewrite Hval. apply (@ret_hasvalue partial.implementation.monotonic_functions).
 Qed.
 
-(* --- 4. θ_ours_η_L: Θ_ours_L(η_L i j) agrees with raceVal_L exactly, via
+(* --- 4. θ_η_L: θ_L(η_L i j) agrees with raceVal_L exactly, via
    LMuRecursion.mu_sound/mu_complete applied to raceBitOn (tcode i) (tcode j) y,
    plus the semidec_semidecHaltIn correspondence tying
    raceBitOn/winnerOn back to semidec_of_L. ------------------------------ *)
@@ -358,9 +356,9 @@ split.
   now apply winnerBit_branch.
 Qed.
 
-Lemma θ_ours_η_L i j y v : Θ_ours_L (η_L i j) y =! v <-> raceVal_L i j y =! v.
+Lemma θ_η_L i j y v : θ_L (η_L i j) y =! v <-> raceVal_L i j y =! v.
 Proof.
-unfold Θ_ours_L.
+unfold θ_L.
 transitivity (L.app (η_L_body i j) (enc y) == enc v).
 { split.
   - intros [n Hn]. cbn in Hn. apply T_L_iff. apply η_L_body_proc. exists n. exact Hn.
@@ -406,13 +404,13 @@ Qed.
 (* --- Payoff: eff_insep_A0_B1_L_via_generic is exactly
    eff_insep_A0_B1_generic (ReducibilityDegrees/
    EffectiveInseparabilityGeneric.v) instantiated with
-   W_L/semidec_of_L/Θ_ours_L/η_L -- the *same* instantiation recipe
+   W_L/semidec_of_L/θ_L/η_L -- the *same* instantiation recipe
    ReducibilityDegrees/EffectiveInseparability.v uses with
-   W/semidec_of/Θ_ours/η, formally tying this construction to that
+   W/semidec_of/Θ_num/η, formally tying this construction to that
    shared generic argument rather than being an independently-proved
    lookalike. ------------------------------------------------------- *)
 
 Lemma eff_insep_A0_B1_L_via_generic : eff_insep_shape W_L A0_L B1_L.
 Proof.
-  exact (eff_insep_A0_B1_generic W_L semidec_of_L semidec_of_L_spec Θ_ours_L η_L θ_ours_η_L).
+  exact (eff_insep_A0_B1_generic W_L semidec_of_L semidec_of_L_spec θ_L η_L θ_η_L).
 Qed.
