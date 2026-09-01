@@ -61,3 +61,21 @@ opam install coq-library-undecidability
 make models
 make install-models
 ```
+
+### Nix (this fork)
+
+This fork also ships a `flake.nix`, which is how it's actually built and
+verified in practice by its downstream consumers (see `CONTRIBUTIONS.md`):
+
+```sh
+nix develop   # enter dev shell
+nix build     # build/typecheck everything, models included
+```
+
+The flake pins `coq-library-undecidability` to
+`github:jstrattonsmith/coq-library-undecidability/enable-L-nix-9.0` (kept in
+sync with upstream `rocq-9.0`) rather than resolving it via opam, so `models`
+build without a separate `opam install coq-library-undecidability` step. A
+downstream flake consuming this one as an input should set
+`inputs.coq-synthetic-computability.inputs.coq-library-undecidability.follows`
+to avoid pulling in a second, possibly-drifted copy.
