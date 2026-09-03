@@ -37,6 +37,32 @@ Definition eff_insep_shape (W : nat -> nat -> Prop) (A B : nat -> Prop) : Prop :
 
 End EffInsepShape.
 
+Section EffInsepSymm.
+
+Context {Part : partiality}.
+
+Local Fact disj_symm {X} (P Q : X -> Prop) :
+  (forall x, P x -> ~ Q x) <-> (forall x, Q x -> ~ P x).
+Proof.
+split; move=> Hdisj ?? HP; by apply (Hdisj _ HP).
+Qed.
+
+Local Fact eff_insep_shape_dir W A B :
+  eff_insep_shape W A B -> eff_insep_shape W B A.
+Proof.
+move=> [? [? [? [f Hf]]]].
+repeat split; auto; first by apply disj_symm.
+exists (fun i j => f j i); move=> i j HBw HAw /disj_symm Hwdisj.
+have [? [? [??]]] := Hf j i HAw HBw Hwdisj.
+eexists; (repeat split); eauto.
+Qed.
+
+Lemma eff_insep_shape_symmetric W A B :
+  eff_insep_shape W A B <-> eff_insep_shape W B A.
+Proof. split; apply eff_insep_shape_dir. Qed.
+
+End EffInsepSymm.
+
 Section EffInsepGeneric.
 
 Context {Part : partiality}.
