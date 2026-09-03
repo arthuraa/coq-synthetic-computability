@@ -1,11 +1,10 @@
 (* Builds a SINGLE, uniform L-term realizing T_L c x (searching for the
    first n where it halts and returning that value), taking (c,x) as
-   RUNTIME bound L-variables -- not a per-instance construction. Possible
-   now that T_L_Extract.v establishes T_L is genuinely, uniformly
-   extractable. Mirrors Undecidability/MM2/Legacy/
-   EffectiveInseparability_MM2_Race.v's s_race/raceVal_MM2 construction
-   closely, but for a single T_L lookup instead of a race between two
-   semideciders. *)
+   RUNTIME bound L-variables rather than building one L-term per instance.
+   Possible because T_L_Extract.v establishes that T_L is genuinely,
+   uniformly extractable. R_TL is the resulting relation, phrased as an
+   L_computable_closed 2-ary relation via mu-search over T_L's step
+   index. *)
 
 Require Import SyntheticComputability.Models.CT.
 Require Import SyntheticComputability.Models.T_L_Extract.
@@ -63,13 +62,10 @@ split.
 Qed.
 
 (* --- 1. A single 2-argument L term realizing the whole T_L family ------
-   Structurally s_race's shape (MM2/Legacy/EffectiveInseparability_MM2_Race.v,
-   Undecidability), but with a single T_L' lookup instead of a race between
-   two semideciders, and OPTION elimination (T_L' returns option nat, not
-   bool) instead of boolean elimination -- reusing the now-removed
-   PerInstanceGuard.v's someHandler=identity idiom (no Omega/divergence
-   needed here: the None branch is logically unreachable once mu has found
-   n with TL_bit c x n = true, so any placeholder value for it is fine). *)
+   Uses OPTION elimination (T_L' returns option nat, not bool) rather than
+   boolean elimination: the None branch is logically unreachable once mu
+   has found n with TL_bit c x n = true, so any placeholder value for it
+   is fine. *)
 
 Require SyntheticComputability.Models.LMuRecursion.
 
@@ -94,9 +90,7 @@ Qed.
 
 (* TLP c x: same search predicate as inlined inside s_TL, but as a
    standalone term with c,x baked in via Gallina currying -- connected to
-   s_TL's own inlined (de Bruijn-referencing) copy by s_TL_reduce below,
-   mirroring raceP_MM2/s_race_reduce's role in
-   EffectiveInseparability_MM2_Race.v. *)
+   s_TL's own inlined (de Bruijn-referencing) copy by s_TL_reduce below. *)
 Definition TLP (c x : nat) : term :=
   lam (L.app (L.app (L.app (ext TL_bit) (enc c)) (enc x)) (var 0)).
 

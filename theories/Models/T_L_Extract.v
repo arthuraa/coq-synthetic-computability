@@ -1,45 +1,28 @@
-(* Resolves the long-standing blocker on Models/CT.v's commented-out
-   `T_L_computable`/`enum_term_computable` TODOs: T_L is, in fact,
-   genuinely and uniformly extractable to L, for arbitrary runtime
-   (c, x, n) -- not just a single known instance (contra the earlier,
-   more limited per-instance workaround in the now-removed
-   Models/PerInstanceGuard.v).
+(* T_L is genuinely and uniformly extractable to L: this file gives an
+   extraction-friendly reformulation of T_L, for arbitrary runtime
+   (c, x, n), not just one fixed instance.
 
-   Kept as a standalone file (not folded into CT.v) so CT.v's original
-   TODOs can be filled in later by hand, at leisure, rather than
-   immediately overwritten here.
+   Three extraction constraints this reformulation works around:
 
-   Three narrow, specific fixes were needed, found by bisecting against
-   already-working extractions (subst, eva):
+   1. A `fun! <n,m> => ...` pattern-let over `unembed` does not extract:
+      `unembed`'s `computable` instance is registered via `computableExt`
+      (extensional equality to a Fixpoint), not a direct `extract`, and
+      pattern-let destructuring doesn't trigger the right unfolding for
+      `extract` to see through it. Plain `fst`/`snd` projections work
+      instead.
 
-   1. enum_term's `fun! <n,m> => ...` notation expands to a *pattern-let*
-      `let (n,m) := unembed p in ...`, and `extract` cannot see through
-      that pattern-let for `unembed` specifically -- its `computable`
-      instance was registered via `computableExt` (extensional equality
-      to a Fixpoint), not a direct `extract`, and pattern-let destructuring
-      doesn't trigger the right unfolding. Rewriting via plain `fst`/`snd`
-      applications instead of let-pattern destructuring fixes this.
+   2. A file needing `Undecidability.L.Datatypes.LTerm`'s `term`
+      constructor instances for `extract`'s typeclass search must
+      `Require Import` it directly -- arriving transitively is not
+      enough.
 
-   2. `Undecidability.L.Datatypes.LTerm` needs a direct, explicit `Require
-      Import` -- relying on it arriving transitively (e.g. via CT.v) is
-      not enough for `extract`'s own typeclass search to find term's
-      constructor instances.
-
-   3. The real one: a *recursive* function pattern-matching on `term`
-      only extracts successfully when (a) the `term` argument is the
-      FIRST parameter (not preceded by a `nat`, as the natural
-      `bound_dec`-style signature `nat -> term -> ...` writes it), and
-      (b) the return type is `term` or `option X` -- a bare `bool`/`nat`
-      return breaks extraction, even though the very same recursion
-      structure over the very same three constructors, with return type
-      `term`, extracts fine (as `subst` and `strip_lams`-style functions
-      demonstrate). So the closedness check `enum_closed` needs (whether
-      `bound 0 t` holds) has to be phrased as an `option`-returning
-      function of type `term -> nat -> option nat`, with that exact
-      argument order, rather than `Undecidability.L.Util.L_facts.bound_dec
-      : nat -> term -> dec (bound k s)` (which extracts nowhere at all,
-      being a hand-rolled decidability proof, not a plain recursive
-      boolean function to begin with). *)
+   3. A recursive function pattern-matching on `term` extracts only when
+      the `term` argument is the FIRST parameter and the return type is
+      `term` or `option X` -- a bare `bool`/`nat` return breaks
+      extraction, even for the same recursion structure over the same
+      constructors. This is why the closedness check below is phrased as
+      a `term -> nat -> option nat` function, not as a
+      `nat -> term -> ...`-shaped boolean decision procedure. *)
 
 Require Import SyntheticComputability.Models.CT.
 Require Import Undecidability.L.Tactics.LTactics.

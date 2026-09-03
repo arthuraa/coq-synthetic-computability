@@ -5,11 +5,11 @@
    structure of the argument.
 
    Fully proved, no Admitted/axioms: eff_insep_A0_B1_L_via_generic at the
-   bottom of this file is the deliverable. η_L is built via LMuRecursion.mu (an
-   L-level unbounded-search combinator) applied to a hand-extracted race
-   predicate (raceBitOn/winnerBitOn); see the comment above
-   SyntheticComputability.Models.LMuRecursion's Require, below, for why
-   this replaced an earlier Por-based construction. *)
+   bottom of this file is the deliverable. η_L is built via
+   LMuRecursion.mu (an L-level unbounded-search combinator) applied to a
+   hand-extracted race predicate (raceBitOn/winnerBitOn) rather than by
+   racing raw L-terms directly; see the comment above
+   SyntheticComputability.Models.LMuRecursion's Require, below, for why. *)
 
 Require Import SyntheticComputability.Models.CT.
 Require Import Undecidability.L.L.
@@ -74,18 +74,17 @@ Definition raceVal_L (i j y : nat) : part nat :=
 Definition A0_L (z : nat) : Prop := θ_L (fst (unembed z)) (snd (unembed z)) =! 1.
 Definition B1_L (z : nat) : Prop := θ_L (fst (unembed z)) (snd (unembed z)) =! 0.
 
-(* --- 3. THE NEW PIECE: η_L represents raceVal_L as an actual L-term,
-   built via LMuRecursion.mu (an L-level unbounded-search combinator)
-   applied to a hand-extracted "race predicate", rather than by racing two
-   raw L-terms via Por. (An earlier attempt raced tcode i / tcode j
-   directly via Por and hit a real obstacle: Por's raw convergence doesn't
-   match T_L/semidec_of_L's convergence, since T_L additionally requires
-   the result to decode as a nat, which Por's doesHaltIn doesn't check;
-   patching that gap for a *dynamically produced* value would need genuine
-   self-interpretation, since checking whether a runtime value's syntax
-   matches a Church numeral requires its *quoted* representation, which we
-   have no way to compute for a value produced by *running* another
-   program.) T_L/semidec_of_L's nat-decoding check is itself just an
+(* --- 3. η_L represents raceVal_L as an actual L-term, built via
+   LMuRecursion.mu (an L-level unbounded-search combinator) applied to a
+   hand-extracted "race predicate", rather than by racing two raw L-terms
+   via Por: Por's raw convergence notion doesn't match
+   T_L/semidec_of_L's, since T_L additionally requires the result to
+   decode as a nat, which Por's doesHaltIn doesn't check -- and that check
+   can't be patched on top of a *dynamically produced* value without
+   genuine self-interpretation, since checking whether a runtime value's
+   syntax matches a Church numeral requires its *quoted* representation,
+   which isn't computable for a value produced by *running* another
+   program. T_L/semidec_of_L's nat-decoding check is itself just an
    ordinary Rocq function (composing `eva` with `nat_unenc`), so it
    extracts to L-code directly and cleanly when built as ONE combined
    function -- no separate CBV-force-then-reflect step needed.
@@ -189,17 +188,14 @@ Qed.
 
 (* winnerBitOn s y n: given the race (s vs whatever it's racing against)
    has resolved by step n, did s win. Deliberately bool-valued, not
-   nat-valued -- a bool -> nat conversion function (0/1) reliably fails to
-   extract once Models.CT is in scope (confirmed by direct probing: the
-   exact same shape extracts fine in isolation, but "could not simplify
-   some occuring term, shelved instead" once CT.v's transitive imports are
-   present -- root cause not fully identified, but bool-valued functions
-   of this same shape (semidecHaltIn, raceBitOn) extract cleanly even with
-   CT.v in scope, so the fix is to stay bool-valued throughout and do the
-   final "which nat does this bool mean" step via a Church-boolean
-   selector spliced directly into η_L_body (winnerBit_branch below),
-   exactly the technique used for Church-boolean branching everywhere else
-   in this L-calculus library. *)
+   nat-valued: a bool -> nat conversion function (0/1) fails to extract
+   once Models.CT is in scope ("could not simplify some occuring term,
+   shelved instead"), even though bool-valued functions of this same
+   shape (semidecHaltIn, raceBitOn) extract cleanly there. The fix is to
+   stay bool-valued throughout and do the final "which nat does this bool
+   mean" step via a Church-boolean selector spliced directly into
+   η_L_body (winnerBit_branch below), the same technique used for
+   Church-boolean branching elsewhere in this L-calculus library. *)
 Definition winnerBitOn (s : term) (y n : nat) : bool :=
   semidecHaltIn (L.app s (enc (embed (y,y)))) n.
 

@@ -1,17 +1,14 @@
-(* The "folklore" transport lemma behind Azevedo de Amorim, Zhang &
-   Gaboardi's Theorem 19 (and, per their own citation, Kuznetsov's
-   Proposition 9): effective inseparability of (A,B) transfers to any
-   *superset* A' of A that stays disjoint from B, over the SAME numbering
-   W and the SAME underlying domain -- no new race/diagonal construction
-   needed, just monotonicity of the witness hypotheses.
+(* A monotonicity/transport lemma for the bundled effective-inseparability
+   notion eff_insep_shape (EffectiveInseparabilityGeneric.v): effective
+   inseparability of (A,B) transfers to any *superset* A' of A that stays
+   disjoint from B, over the SAME numbering W and the SAME underlying
+   domain -- no new race/diagonal construction needed, just monotonicity
+   of the witness hypotheses.
 
-   This is the piece that lets an effective-inseparability result be
-   transported from one numbering (e.g. T_L, where it's cheap to prove)
-   to a *different*, harder-to-work-with set A' (e.g. one phrased via a
-   separate machine model's own semantics) via a PLAIN reduction, without
-   ever needing to re-run the race construction natively in the second
-   model. See project memory (2026-08-07) for how this is meant to be
-   used against Undecidability/mm.v's R_target. *)
+   This is the piece that lets an effective-inseparability result proved
+   for one set A be transported, via a plain inclusion A ⊆ A', to a
+   different, harder-to-construct-directly set A', without re-running the
+   race construction against A' itself. *)
 
 From SyntheticComputability.Synthetic Require Import DecidabilityFacts EnumerabilityFacts Definitions.
 Require Import SyntheticComputability.Shared.partial.

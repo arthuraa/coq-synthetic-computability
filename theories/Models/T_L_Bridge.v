@@ -3,12 +3,7 @@
    "T_L_Uniform.R_TL connection -> eff_insep_core" argument, parametrized
    over an arbitrary Pred : nat -> Prop characterized by an R_TL/mu <= 1
    connection -- not tied to any specific downstream project's own
-   target set.
-
-   theta_L_iff used to be stated over a trivial Theta_ours_L alias for
-   theta_L (Theta_ours_L c y := theta_L c y); eliminated 2026-08-31 along
-   with that alias itself (see Models/EffectiveInseparability_L.v),
-   since it added a name without adding meaning. *)
+   target set. *)
 
 From Stdlib Require Import Unicode.Utf8 Arith Lia.
 From Undecidability Require Import FRACTRAN.

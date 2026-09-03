@@ -1,6 +1,5 @@
-(* The unbundled notion of effective inseparability (Kuznetsov's
-   Definition 5 / Azevedo de Amorim et al.'s Theorem 17 statement,
-   verbatim): disjointness plus a witness function, no enumerability.
+(* The unbundled notion of effective inseparability: disjointness plus a
+   witness function, no enumerability requirement on either set.
    The *library's* eff_insep_shape (EffectiveInseparabilityGeneric.v)
    bundles `enumerable A` into its own definition (for Proposition 7's
    convenience, not because Definition 5/Theorem 17 require it); this
