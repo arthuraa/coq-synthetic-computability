@@ -65,7 +65,9 @@ make install-models
 ### Nix (this fork)
 
 This fork also ships a `flake.nix`, which is how it's actually built and
-verified in practice by its downstream consumers (see `CONTRIBUTIONS.md`):
+verified in practice by its downstream consumers (see the parent
+directory's `CONTRIBUTIONS.md` for what was added under `theories/Models/`
+and `theories/ReducibilityDegrees/` and why):
 
 ```sh
 nix develop   # enter dev shell
