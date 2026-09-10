@@ -56,13 +56,13 @@ Qed.
 
 Lemma productive_red p q :
   p ⪯ₘ q -> productive p -> productive q.
-Proof. 
+Proof.
   intros [f Hf] [g Hg].
   specialize (SMN' f) as [k Hk].
   exists (fun c => f (g (k c))). intros c Hs.
   assert (Hkc : forall x, W (k c) x -> p x) by  (intros; now eapply Hf, Hs, Hk).
   split.
-  - now eapply Hf, Hg. 
+  - now eapply Hf, Hg.
   - intros ?. eapply Hg, Hk; eauto.
 Qed.
 
@@ -73,13 +73,13 @@ Proof.
   intros Hcomp. eapply productive_subpredicate.
   eapply productive_red.
   - eapply red_m_complement. eapply Hcomp. eapply K0_enum.
-  - eapply K0_productive. 
+  - eapply K0_productive.
 Qed.
 
 Definition simple (p : nat -> Prop) :=
   enumerable p /\ ~ exhaustible (compl p) /\ ~ exists q, enumerable q /\ ~ exhaustible q /\ (forall x, q x -> compl p x).
 
-Lemma simple_non_enumerable p : 
+Lemma simple_non_enumerable p :
   simple p -> ~ enumerable (compl p).
 Proof.
   intros (H1 & H2 & H3) H4.
@@ -146,6 +146,25 @@ Proof.
   eapply productive_red.
   - eapply red_m_complement, Hcomp, K0_enum.
   - eapply K0_productive.
+Qed.
+
+(** Creative sets are undecidable: a decidable set has an enumerable
+    complement, but a creative set's complement is productive, hence never
+    enumerable. Constructive, no further hypotheses beyond the ambient EA
+    instance. *)
+Lemma creative_undecidable (p : nat -> Prop) : creative p -> ~ decidable p.
+Proof.
+  intros [_ Hprod] Hd.
+  eapply productive_nonenumerable; [exact Hprod |].
+  eapply decidable_enumerable_complement; eauto.
+Qed.
+
+(** Every m-complete enumerable set is undecidable, via creativity. *)
+Lemma m_complete_undecidable (p : nat -> Prop) : enumerable p -> m-complete p -> ~ decidable p.
+Proof.
+  intros He Hc.
+  eapply creative_undecidable.
+  eapply m_complete_to_creative; eauto.
 Qed.
 
 End Assume_EA.
