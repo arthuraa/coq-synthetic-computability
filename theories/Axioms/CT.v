@@ -9,7 +9,7 @@ Definition CT_for (ϕ : nat -> nat -> nat -> option nat) :=
 
 Definition SMN_for (T : nat -> nat -> nat -> option nat) :=
   (exists S : nat -> nat -> nat, forall c x y v, (exists n, T c ⟨x,y⟩ n = Some v) <-> (exists n, T (S c x) y n = Some v)).
-  
+
 
 Section halting_CT.
 
@@ -18,7 +18,7 @@ Section halting_CT.
   Variable ct : CT_for ϕ.
 
   Definition K' c := exists n m, ϕ c ⟨c, n⟩ m = Some 0.
-  
+
   Lemma semidecidable_K' : semi_decidable K'.
   Proof.
     exists (fun c => fun! ⟨n, m⟩ => if (ϕ c ⟨c,n⟩ m) is Some 0 then true else false).
@@ -28,7 +28,7 @@ Section halting_CT.
     - intros (nm & H). destruct (unembed nm) as [n m].
       destruct ϕ as [[] | ] eqn:E; inv H.
       eauto.
-  Qed. 
+  Qed.
 
   Lemma not_semidecidable_compl_K' : ~ semi_decidable (compl K').
   Proof.
@@ -40,7 +40,7 @@ Section halting_CT.
     split.
     - intros [n Hn].
       specialize (Hc ⟨c, n⟩) as [m H].
-      rewrite embedP in H. 
+      rewrite embedP in H.
       exists n, m. rewrite Hn in H. eauto.
     - intros (n & m & H). exists n.
       specialize (Hc (⟨c, n⟩)) as [m' H'].

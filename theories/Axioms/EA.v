@@ -38,7 +38,7 @@ Lemma EA_halting : EA -> exists K : nat -> Prop, enumerable K /\ ~ enumerable (c
 Proof.
   intros [φ EA].
   exists (fun c => exists n, φ c n = Some c).
-  assert (He : ~ enumerable (compl (fun c => exists n, φ c n = Some c))). { 
+  assert (He : ~ enumerable (compl (fun c => exists n, φ c n = Some c))). {
     intros [f Hf].
     specialize (EA (fun _ => compl (fun c => exists n, φ c n = Some c))) as [γ H].
     { exists (fun _ => f). firstorder. }
@@ -120,10 +120,10 @@ Proof.
     + exists (fun '(x, y) => if R x is Some l then (l,y) else (x0, y)).
       intros [x y]. cbn.
       destruct (R x); reflexivity.
-    + eauto. 
+    + eauto.
     + eapply discrete_prod. eapply datatype_discrete. now exists I, R.
       eapply discrete_nat.
-  - exists (fun l => c (I l)). intros. 
+  - exists (fun l => c (I l)). intros.
     now rewrite <- (Hc (I x) y), HIR.
 Qed.
 
@@ -141,7 +141,7 @@ Qed.
 
 Lemma List_id : exists c_l, forall (l : list nat), forall x, W (c_l l) x <-> List.In x l.
 Proof.
-  eapply EAS_list. 
+  eapply EAS_list.
   eapply decidable_enumerable. 2:eauto.
   eapply decidable_iff. econstructor.
   intros [x y]. cbn. eapply ListAutomation.list_in_dec. intros. eapply nat_eq_dec.
@@ -185,15 +185,15 @@ Qed.
 
 From SyntheticComputability Require Import truthtables.
 
-Lemma TT : 
-  forall f : nat -> { Q : list nat & truthtable}, 
+Lemma TT :
+  forall f : nat -> { Q : list nat & truthtable},
     exists c : list nat -> nat, forall l x, W (c l) x <-> eval_tt (projT2 (f x)) (List.map (fun x => negb (inb (uncurry Nat.eqb) x l)) (projT1 (f x))) = false.
 Proof.
   intros f.
   eapply EAS_list.
   eapply decidable_enumerable. 2:eauto.
   eapply decidable_iff. econstructor.
-  intros [x y]. cbn. exact _. 
+  intros [x y]. cbn. exact _.
 Qed.
 
 Tactic Notation "intros" "⟨" ident(n) "," ident(m) "⟩" :=
@@ -239,7 +239,7 @@ Lemma W_not_enumerable : ~ enumerable (compl (uncurry W)).
 Proof.
   eapply not_coenumerable; eauto.
   - eapply K0_red.
-  - eapply K0_not_enumerable. 
+  - eapply K0_not_enumerable.
 Qed.
 
 Lemma K0_enum : enumerable K0.
@@ -277,7 +277,7 @@ Proof.
   - eapply ReducibilityFacts.enumerable_red with (q := uncurry W); eauto.
     2: eapply enumerable_W. all:eauto.
     exists (fun '(xy,z) => (fun! ⟨x,y⟩ => (x,y)) xy). intros [xy z].
-    cbn. now destruct (unembed xy) as [x y]. 
+    cbn. now destruct (unembed xy) as [x y].
   - exists c. intros xy. unfold K0. rewrite <- (Hc xy (c xy)).
     now destruct (unembed xy) as [x y].
 Qed.
@@ -293,7 +293,7 @@ Require Import List.
 
 Lemma generative_W :   generative (fun! ⟨ n, m ⟩ => W n m).
 Proof.
-  eapply unbounded_generative. 
+  eapply unbounded_generative.
   intros x y; destruct (Dec.nat_eq_dec x y); eauto.
   destruct (do_EA (fun _ => True)) as [c_top H_top]. {
     eapply decidable_enumerable. 2:eauto. exists (fun _ => true). firstorder.
