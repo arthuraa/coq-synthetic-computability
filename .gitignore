@@ -391,3 +391,5 @@ TSWLatexianTemp*
 
 Makefile.coq
 Makefile.coq.conf
+/.direnv/
+/.envrc
