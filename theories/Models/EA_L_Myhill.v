@@ -1,13 +1,18 @@
 (* Generic Myhill's-theorem-style machinery built on top of EA_L.v:
-   given CT_L (to build EA_L at all) and MP (needed inside
-   eff_insep_to_creative itself, to convert a `part`-valued/partial
-   separating witness into a decidable total one -- a genuinely separate
-   cost of the underlying Myhill's-theorem-style argument, not subsumed
-   by CT_L, regardless of which numbering is used), turns
-   eff_insep_shape W_L P B1_L into creative P / m-complete P for an
-   arbitrary P. Zero content specific to any particular downstream
-   project -- the only choice left to a caller is which set supplies
-   the eff_insep_shape hypothesis.
+   given CT_L (to build EA_L at all), turns effective inseparability
+   eff_insep_with out W_L P B1_L into creative P / m-complete P for an
+   arbitrary P. creative_of_eff_insep_with is stated once, for any
+   witness representation out, given a way Htot to totalize
+   productive_with out; its two instances differ only in Htot:
+
+     creative_of_eff_insep_shape_tot  (total witness)    no MP
+     creative_of_eff_insep_shape      (partial witness)  MP, via
+                                      partial_productive_iff_productive
+
+   m-completeness adds MP once more, through creative_to_m_complete.
+   Zero content specific to any particular downstream project -- the
+   only choice left to a caller is which set supplies the effective
+   inseparability hypothesis.
 
    Named EA_L_Myhill.v (not Myhill.v) to avoid colliding with
    Basic/Myhill.v, which proves Myhill's *isomorphism* theorem -- a
@@ -25,24 +30,6 @@ Require Import SyntheticComputability.ReducibilityDegrees.simple.
 Require Import SyntheticComputability.Axioms.EA.
 Require Import SyntheticComputability.CRM.principles.
 
-(* --- eff_insep_shape is invariant under replacing W with a pointwise-
-   equivalent numbering -- a generic, mechanical transport lemma. --- *)
-
-Lemma eff_insep_shape_W_iff (W1 W2 : nat -> nat -> Prop) (A B : nat -> Prop) :
-  (forall c x, W1 c x <-> W2 c x) -> eff_insep_shape W1 A B -> eff_insep_shape W2 A B.
-Proof.
-intros HW [HAenum [HBenum [Hdisj [f Hf]]]].
-split; [exact HAenum |]. split; [exact HBenum |]. split; [exact Hdisj |].
-exists f. intros i j Hi Hj Hij.
-destruct (Hf i j) as [k [Hk [Hki Hkj]]].
-- intros x Hx % Hi. apply HW. exact Hx.
-- intros x Hx % Hj. apply HW. exact Hx.
-- intros x Hx % HW. intros Hy % HW. exact (Hij x Hx Hy).
-- exists k. split; [exact Hk |]. split.
-  + intros Hk1 % HW. exact (Hki Hk1).
-  + intros Hk2 % HW. exact (Hkj Hk2).
-Qed.
-
 (* `creative` is stated relative to an ambient EA instance's own
    canonical numbering (simple.v's productive/creative are defined via
    `W`, which is itself EA-instance-relative, resolved through EA's
@@ -58,7 +45,7 @@ Qed.
    argument unresolved even with EA_L ct sitting right there in scope.
    Local Instance forces the registration explicitly; it gets
    substituted away (not re-generalized) when the section closes,
-   giving exactly `forall ct : CT_L, forall P, MP -> ... -> creative P`,
+   giving exactly `forall ct : CT_L, forall P, ... -> creative P`,
    with the EA instance silently EA_L ct throughout. *)
 
 Section GenericCreative.
@@ -66,20 +53,43 @@ Section GenericCreative.
 Variable ct : CT_L.
 Local Instance EA_inst : EA := EA_L ct.
 
-Theorem creative_of_eff_insep_shape (P : nat -> Prop) (MP_assm : MP) :
-  eff_insep_shape W_L P B1_L -> creative P.
+Theorem creative_of_eff_insep_with {F : Type} (out : F -> nat -> Prop)
+    (Htot : forall p, productive_with out p -> productive p) (P : nat -> Prop) :
+  eff_insep_with out W_L P B1_L -> creative P.
 Proof.
 intros Hshape.
-eapply (eff_insep_to_creative MP_assm).
-eapply eff_insep_shape_W_iff; [| exact Hshape].
+eapply (eff_insep_with_to_creative out Htot).
+eapply eff_insep_with_W_iff; [| exact Hshape].
 intros i x. symmetry. exact (W_psi_L_iff i x).
 Qed.
 
+Theorem creative_of_eff_insep_shape_tot (P : nat -> Prop) :
+  eff_insep_shape_tot W_L P B1_L -> creative P.
+Proof.
+apply creative_of_eff_insep_with. intros p. apply productive_with_eq.
+Qed.
+
+Theorem creative_of_eff_insep_shape (P : nat -> Prop) (MP_assm : MP) :
+  eff_insep_shape W_L P B1_L -> creative P.
+Proof.
+apply creative_of_eff_insep_with.
+intros p. apply (partial_productive_iff_productive p MP_assm).
+Qed.
+
 End GenericCreative.
+
+Theorem m_complete_of_eff_insep_shape_tot (P : nat -> Prop) :
+  CT_L -> MP -> eff_insep_shape_tot W_L P B1_L -> m-complete P.
+Proof.
+intros ct MP_assm Hshape.
+exact (creative_to_m_complete MP_assm _
+         (creative_of_eff_insep_shape_tot ct Hshape)).
+Qed.
 
 Theorem m_complete_of_eff_insep_shape (P : nat -> Prop) :
   CT_L -> MP -> eff_insep_shape W_L P B1_L -> m-complete P.
 Proof.
 intros ct MP_assm Hshape.
-exact (creative_to_m_complete MP_assm _ (creative_of_eff_insep_shape ct MP_assm Hshape)).
+exact (creative_to_m_complete MP_assm _
+         (creative_of_eff_insep_shape ct MP_assm Hshape)).
 Qed.

@@ -713,6 +713,45 @@ Proof.
   eapply MP.
 Qed.
 
+(** Extending a ¬¬-total partial function to a total one is no weaker
+    than MP, even though the extension need not prove termination: its
+    output can be checked decidably, which recovers the witness.  So the
+    MP in [partial_productive_iff_productive] cannot be weakened to this
+    principle. *)
+Definition MP_extend {Part : partiality} :=
+  forall h : nat -> part nat, (forall c, ~~ ter (h c)) ->
+    exists G : nat -> nat, forall c k, h c =! k -> G c = k.
+
+Lemma MP_extend_to_MP {Part : partiality} :
+  MP_extend -> MP.
+Proof.
+  intros ext f Hf.
+  destruct (ext (fun _ => mu_tot f)) as [G HG].
+  { intros _ Hnter. apply Hf. intros [n Hn].
+    apply Hnter. eapply mu_tot_ter; eauto. }
+  destruct (f (G 0)) eqn:E; [eauto |].
+  exfalso. apply Hf. intros [n Hn].
+  assert (ter (mu_tot f)) as [k Hk] by (eapply mu_tot_ter; eauto).
+  pose proof (HG 0 k Hk) as HGk.
+  apply mu_tot_hasvalue in Hk as [Hk _].
+  congruence.
+Qed.
+
+Lemma MP_to_MP_extend {Part : partiality} :
+  MP -> MP_extend.
+Proof.
+  intros mp h Hh.
+  exists (fun c => eval (MP_to_MP_partial mp _ _ (Hh c))).
+  intros c k Hk.
+  eapply hasvalue_det; [apply eval_hasvalue | exact Hk].
+Qed.
+
+Lemma MP_iff_MP_extend {Part : partiality} :
+  MP <-> MP_extend.
+Proof.
+  split; [apply MP_to_MP_extend | apply MP_extend_to_MP].
+Qed.
+
 Section Assume_EA.
 
   Context {EA : EA}.

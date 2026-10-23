@@ -110,8 +110,8 @@ Qed.
 
 Theorem eff_insep_K_of_B1_L : eff_insep_core W_L K_of B1_L.
 Proof.
-apply (eff_insep_core_superset (A := A0_L)).
-- exact (eff_insep_shape_to_core eff_insep_A0_B1_L_via_generic).
+apply (eff_insep_core_with_superset (@hasvalue _ nat) (A := A0_L)).
+- exact (eff_insep_with_to_core (@hasvalue _ nat) eff_insep_A0_B1_L_via_generic).
 - exact A0_L_subset_K_of.
 - exact K_of_B1_L_disjoint.
 Qed.

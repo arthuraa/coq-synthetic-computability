@@ -410,3 +410,10 @@ Lemma eff_insep_A0_B1_L_via_generic : eff_insep_shape W_L A0_L B1_L.
 Proof.
   exact (eff_insep_A0_B1_generic W_L semidec_of_L semidec_of_L_spec θ_L η_L θ_η_L).
 Qed.
+
+Lemma eff_insep_A0_B1_L_via_generic_tot :
+  eff_insep_shape_tot W_L A0_L B1_L.
+Proof.
+  exact (eff_insep_A0_B1_generic_tot W_L semidec_of_L semidec_of_L_spec
+           θ_L η_L θ_η_L).
+Qed.

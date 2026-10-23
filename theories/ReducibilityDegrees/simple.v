@@ -167,11 +167,31 @@ Proof.
   eapply m_complete_to_creative; eauto.
 Qed.
 
+(** Productivity over an arbitrary output relation [out], saying which
+    number a witness value denotes. [out := eq] is [productive]
+    (productive_with_eq); [out := hasvalue] is [partial_productive]. *)
+Definition productive_with {F : Type} (out : F -> nat -> Prop)
+    (p : nat -> Prop) : Prop :=
+  exists f : nat -> F,
+    forall c,
+      (forall x, W c x -> p x) ->
+      exists k, out (f c) k /\ p k /\ ~ W c k.
+
+Lemma productive_with_eq (p : nat -> Prop) :
+  productive_with (@eq nat) p <-> productive p.
+Proof.
+  split; intros [f Hf]; exists f; intros c Hc.
+  - destruct (Hf c Hc) as [k [<- Hk]]. exact Hk.
+  - exists (f c). split; [reflexivity | exact (Hf c Hc)].
+Qed.
+
 End Assume_EA.
 
 From SyntheticComputability.Shared Require Import partial.
 From SyntheticComputability.Basic Require Import Recursion.
 From SyntheticComputability.CRM Require Import principles.
+
+Notation partial_productive := (productive_with (@hasvalue _ nat)).
 
 Section PartialProductive.
 
@@ -180,13 +200,6 @@ Context {Part : partiality}.
 
 Notation φ := (proj1_sig EA).
 Notation EAP := (proj2_sig EA).
-
-Definition partial_productive (p : nat -> Prop) : Prop :=
-  exists f : nat -> part nat,
-    forall c,
-      (forall x, W c x -> p x) ->
-      exists k,
-        hasvalue (f c) k /\ p k /\ ~ W c k.
 
 Lemma partial_productive_iff_productive (p : nat -> Prop) :
   MP -> partial_productive p <-> productive p.

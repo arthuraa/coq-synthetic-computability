@@ -1,4 +1,4 @@
-From SyntheticComputability.Synthetic Require Import DecidabilityFacts EnumerabilityFacts.
+From SyntheticComputability.Synthetic Require Import DecidabilityFacts EnumerabilityFacts reductions.
 Require Import SyntheticComputability.Axioms.EA.
 From SyntheticComputability.ReducibilityDegrees Require Import simple EffectiveInseparabilityGeneric.
 From SyntheticComputability.CRM Require Import principles.
@@ -16,8 +16,6 @@ Hypothesis MP_assm : MP.
 
 Notation φ := (proj1_sig EA_inst).
 Notation EAP := (proj2_sig EA_inst).
-
-Definition eff_insep (A B : nat -> Prop) : Prop := eff_insep_shape W A B.
 
 Lemma W_union :
   exists u : nat -> nat -> nat,
@@ -57,18 +55,20 @@ rewrite He.
 reflexivity.
 Qed.
 
-Theorem eff_insep_to_creative (A B : nat -> Prop) :
-  eff_insep A B -> creative A.
+(* The one construction: from a separating witness f, the productive
+   function for compl A is c |-> f i (u j c), where W i = A, W j = B and
+   W (u j c) = W j ∪ W c. Generic in how a witness value denotes its
+   separating number, so it serves the partial and total notions alike. *)
+Theorem eff_insep_with_to_productive_with {F : Type}
+    (out : F -> nat -> Prop) (A B : nat -> Prop) :
+  eff_insep_with out W A B -> productive_with out (compl A).
 Proof.
 intros (Ha & Hb & Hdisj & f & Hf).
-split; [apply Ha |].
-apply (partial_productive_iff_productive _ MP_assm).
 rewrite W_spec in Ha; destruct Ha as [i Ha].
 rewrite W_spec in Hb; destruct Hb as [j Hb].
 destruct W_union as [u Hu].
 exists (fun c => f i (u j c)).
 intros c Hx.
-pose proof (Hf i (u j c)) as Hf'.
 set (HsupA := (fun x HAx => (proj1 (Ha x) HAx))).
 assert (HsupB : forall x, B x -> W (u j c) x).
 { intros x HB % Hb. rewrite Hu. left. exact HB. }
@@ -78,25 +78,49 @@ assert (HWdisj : forall x, W i x -> ~ W (u j c) x).
   - apply Hb in Hj. eapply Hdisj; eauto.
   - apply Hx in Hc. exact (Hc HA).
 }
-specialize (Hf' HsupA HsupB HWdisj) as [k [Hk [Hki Hkj]]].
+destruct (Hf i (u j c) HsupA HsupB HWdisj) as [k [Hk [Hki Hkj]]].
 exists k.
 repeat split; [exact Hk | |].
-- intro HAk.
-  apply Hki.
-  apply Ha.
-  exact HAk.
-- intro Hwck.
-  apply Hkj.
-  apply (Hu j c k).
-  right.
-  exact Hwck.
+- intro HAk. apply Hki. apply Ha. exact HAk.
+- intro Hwck. apply Hkj. apply Hu. right. exact Hwck.
 Qed.
 
-Theorem eff_insep_to_m_complete (A B : nat -> Prop):
-  eff_insep A B -> m-complete A.
+(* Creativity, given a way to totalize productive_with out. The two
+   instances below are the only difference between the partial and
+   total notions. *)
+Theorem eff_insep_with_to_creative {F : Type} (out : F -> nat -> Prop)
+    (Htot : forall p, productive_with out p -> productive p)
+    (A B : nat -> Prop) :
+  eff_insep_with out W A B -> creative A.
 Proof.
-intros Hinsep.
-exact (creative_to_m_complete MP_assm _ (eff_insep_to_creative _ _ Hinsep)).
+intros H. split; [exact (proj1 H) |].
+apply Htot. exact (eff_insep_with_to_productive_with out A B H).
+Qed.
+
+(* Total witness: no MP. *)
+Theorem eff_insep_tot_to_creative (A B : nat -> Prop) :
+  eff_insep_shape_tot W A B -> creative A.
+Proof. apply eff_insep_with_to_creative. intros p. apply productive_with_eq. Qed.
+
+(* Partial witness: totalizing costs MP. *)
+Theorem eff_insep_to_creative (A B : nat -> Prop) :
+  eff_insep_shape W A B -> creative A.
+Proof.
+apply eff_insep_with_to_creative.
+intros p. apply (partial_productive_iff_productive p MP_assm).
+Qed.
+
+(* MP enters only through Myhill's theorem here. *)
+Theorem eff_insep_tot_to_m_complete (A B : nat -> Prop) :
+  eff_insep_shape_tot W A B -> m-complete A.
+Proof.
+intros H. exact (creative_to_m_complete MP_assm _ (eff_insep_tot_to_creative _ _ H)).
+Qed.
+
+Theorem eff_insep_to_m_complete (A B : nat -> Prop) :
+  eff_insep_shape W A B -> m-complete A.
+Proof.
+intros H. exact (creative_to_m_complete MP_assm _ (eff_insep_to_creative _ _ H)).
 Qed.
 
 End EffectiveInseparability.

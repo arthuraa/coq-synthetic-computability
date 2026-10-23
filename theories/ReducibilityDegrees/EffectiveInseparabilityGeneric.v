@@ -19,49 +19,9 @@ Require Import SyntheticComputability.Shared.embed_nat.
    is introduced by this import. *)
 Require Import SyntheticComputability.Axioms.EA.
 
+Require Export SyntheticComputability.ReducibilityDegrees.EffectiveInseparabilityCore.
+
 Require Import ssreflect.
-
-Section EffInsepShape.
-
-Context {Part : partiality}.
-
-Definition eff_insep_shape (W : nat -> nat -> Prop) (A B : nat -> Prop) : Prop :=
-  enumerable A /\ enumerable B /\
-  (forall x, A x -> ~ B x) /\
-  exists f : nat -> nat -> part nat,
-    forall i j,
-    (forall x, A x -> W i x) ->
-    (forall x, B x -> W j x) ->
-    (forall x, W i x -> ~ W j x) ->
-    exists k, hasvalue (f i j) k /\ ~ W i k /\ ~ W j k.
-
-End EffInsepShape.
-
-Section EffInsepSymm.
-
-Context {Part : partiality}.
-
-Local Fact disj_symm {X} (P Q : X -> Prop) :
-  (forall x, P x -> ~ Q x) <-> (forall x, Q x -> ~ P x).
-Proof.
-split; move=> Hdisj ?? HP; by apply (Hdisj _ HP).
-Qed.
-
-Local Fact eff_insep_shape_dir W A B :
-  eff_insep_shape W A B -> eff_insep_shape W B A.
-Proof.
-move=> [? [? [? [f Hf]]]].
-repeat split; auto; first by apply disj_symm.
-exists (fun i j => f j i); move=> i j HBw HAw /disj_symm Hwdisj.
-have [? [? [??]]] := Hf j i HAw HBw Hwdisj.
-eexists; (repeat split); eauto.
-Qed.
-
-Lemma eff_insep_shape_symmetric W A B :
-  eff_insep_shape W A B <-> eff_insep_shape W B A.
-Proof. split; apply eff_insep_shape_dir. Qed.
-
-End EffInsepSymm.
 
 Section EffInsepGeneric.
 
@@ -189,7 +149,7 @@ intros z. unfold B1_g. split.
   apply seval_hasvalue. exists n. exact E.
 Qed.
 
-Theorem eff_insep_A0_B1_generic : eff_insep_shape W A0_g B1_g.
+Theorem eff_insep_A0_B1_generic_tot : eff_insep_shape_tot W A0_g B1_g.
 Proof.
 split; [exact A0_g_enumerable |].
 split; [exact B1_g_enumerable |].
@@ -198,10 +158,9 @@ split.
   unfold A0_g in HA0. unfold B1_g in HB1.
   pose proof (hasvalue_det HA0 HB1) as Hcontra.
   discriminate Hcontra.
-- exists (fun i j => ret (embed (η i j, η i j))).
+- exists (fun i j => embed (η i j, η i j)).
   intros i j H1 H2 H3.
-  exists (embed (η i j, η i j)).
-  split; [apply ret_hasvalue |].
+  exists (embed (η i j, η i j)). split; [reflexivity |].
   assert (Hnk : ~ W i (embed (η i j, η i j))).
   { intros HWi.
     pose proof (H3 (embed (η i j, η i j)) HWi) as HWjneg.
@@ -230,6 +189,11 @@ split.
   pose proof (raceVal_wins_right_g i j (η i j) Hjwin Hilose) as Hrace1.
   pose proof (proj2 (A0_at_k_g i j) Hrace1) as HA0k.
   apply Hnk. apply H1. exact HA0k.
+Qed.
+
+Theorem eff_insep_A0_B1_generic : eff_insep_shape W A0_g B1_g.
+Proof.
+apply eff_insep_shape_tot_to_shape, eff_insep_A0_B1_generic_tot.
 Qed.
 
 End EffInsepGeneric.
